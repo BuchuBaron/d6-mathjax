@@ -1,0 +1,569 @@
+<?php
+
+require_once('wysiwyg_mathjax.file.inc');
+require_once('wysiwyg_mathjax.form.inc');
+require_once('wysiwyg_mathjax.ajax.inc');
+require_once('wysiwyg_mathjax.filter.inc');
+
+/**
+ * Implementation of hook_help().
+ */
+function wysiwyg_mathjax_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#wysiwyg_mathjax':
+      $output = t('<p>A MathML file upload dialog for tinyMCE and MathJax.<h2>Full Installation</h2>
+<ul>
+<li>You need to have a <a href="http://drupal.org/project/wysiwyg" target="_blank">WYSIWYG</a>-compatible editor enabled</li>
+</ul></p>');
+      return $output;
+  }
+}
+
+/**
+ * Implementes hook_menu().
+ */
+function wysiwyg_mathjax_menu() {
+  $items = array();
+  $items['wysiwyg_mathjax/upload/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wysiwyg_mathjax_upload_form', 2),
+    'access callback' => 'user_access',
+    'access arguments' => array('upload MathML file'),
+    'type' => MENU_CALLBACK,
+  );
+  // Render for WYSIWYG
+  $items['ajax/wysiwyg_mathjax/render_wysiwyg/%'] = array(
+    'page callback' => '_wysiwyg_mathjax_render_wysiwyg',
+    'page arguments' => array(3),
+    'access callback' => '_wysiwyg_mathjax_access',
+    'access arguments' => array( 3, 'view'),
+    'type' => MENU_CALLBACK,
+  );
+  // return multiple rendered formulae
+  $items['ajax/wysiwyg_mathjax/render_wysiwyg_formulae/%'] = array(
+    'page callback' => '_wysiwyg_mathjax_render_wysiwyg_formulae',
+    'page arguments' => array(3, 4, 5),
+    'access callback' => 'user_access',
+    'access arguments' => array('upload MathML file'),
+    'type' => MENU_CALLBACK,
+  );
+  // Form for editing a formula
+  $items['wysiwyg_mathjax/edit/%'] = array(
+    'page callback' => 'drupal_get_form',
+    // Be aware that we dont need 2,3 as argument here, eventhough we will expect them
+    // it seems like they are passed automatically when % stands for multiple arguments
+    // ( when it is used as the last part of the path )
+    // That means, if we call the callback this way :
+    // wysiwyg_mathjax/edit/12/foo/bar/cat/dog the from callback will be called as
+    // wysiwyg_mathjax_edit_form($form_state,12,foo,bar,cat,dog) !!
+    // even though we dont have the page arguments set like this : array('wysiwyg_mathjax_edit_form',2,3,4,5),
+    // IF you set those arguments, they will be provided twice in the later form callback, so rather
+    // wysiwyg_mathjax_edit_form($form_state,12,foo,bar,cat,dog,12,foo,bar,cat,dog)
+    // what is not exepected and especially bad if you have optional parameters (which will get overridden then)
+    'page arguments' => array('wysiwyg_mathjax_edit_form', 2),
+    'access callback' => '_wysiwyg_mathjax_access',
+    'access arguments' => array(2,'update'),
+    'type' => MENU_CALLBACK,
+  );
+
+  // Form for editing a formula
+  $items['wysiwyg_mathjax/reuse/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wysiwyg_mathjax_edit_form', 2, 3, TRUE),
+    'access callback' => '_wysiwyg_mathjax_access',
+    'access arguments' => array(2,'view'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/settings/wysiwyg_mathjax'] = array(
+    'type' => MENU_NORMAL_ITEM,
+    'title' => 'WYSIWYG formula upload',
+    'description' => 'Configuration options for the WYSIWYG Formula upload module',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wysiwyg_mathjax_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'wysiwyg_mathjax.admin.inc'
+  );
+
+  return $items;
+}
+
+/**
+ * Implementing the hook_wysiwyg_include_directory().
+ * This is needed to register our WYSIWYG Plugin
+ */
+function wysiwyg_mathjax_wysiwyg_include_directory($type) {
+  switch ($type) {
+    case 'plugins':
+      return $type;
+  }
+}
+
+/**
+ * Access check for iids. There are several cases to cover
+ * - An iid is part of a node
+    view/update: Apply node permissions
+ * - An iid is part of a comment. 
+    view: Apply node permissions
+    update: The author or admin can edit it
+ * - And iid is part of any other unknown relation or not part of any relation at all
+    view: Author only
+    update: Author only
+ *
+ * The author is determined by the fid author.
+ */
+
+function _wysiwyg_mathjax_access($iid, $op) {
+  global $user;
+  if($user->uid == 1 || user_access('administer nodes')) {
+    return TRUE;
+  }
+
+  // Lets see, if this iid has any relation
+  $e = _wysiwyg_mathjax_load_inline_entity($iid);  
+  // Get the relation type
+  $relation = 'unknown';
+  $parent = NULL;
+  if($e->cid != 0) {
+    $parent = _comment_load($e->cid);    
+    // if op is view, use the node relation
+    if($op == 'view') {
+      // get the node as parent
+      $parent = node_load($parent->nid);
+      $relation = 'node';
+    }
+    else {
+      $relation = 'comment';
+    }
+
+    if($parent == NULL) {
+      // if the node does not exist, deny
+      return FALSE;
+    }
+  }
+  else if($e->nid != 0) {    
+    $parent = node_load($e->nid);    
+    $relation = 'node';
+    if($parent == NULL) {
+      // if the node does not exist, deny
+      return FALSE;
+    }
+  }
+  
+  // Ok as we looked for the relation, finally check the permissions.
+  switch($relation) {
+    case 'node':
+      /*********** CASE 2: its a node relation ******/
+      // Call any hooks implementing our access API. If none, use node_access as the default one.
+      $modules = module_implements('wysiwyg_mathjax_access');
+      if(count($modules) > 0) {
+        $grants = module_invoke_all('wysiwyg_mathjax_access',$op,$parent);
+        $result = true;
+        foreach($grants as $bool) {
+          $return = $return && $bool;
+        }
+        return $result;
+      }
+      // else
+      return node_access($op,$parent);
+    break;
+    case 'comment':
+      /*********** CASE 3: its a comment relation ******/
+      // we only get here for edit op, so check for the author
+      // as the check for the admin has been done before
+      if($op == 'update') {
+        // Thanks to drupal consistency...you "edit" a comment and "update" a node..
+        // so we need to switch here, as comment access understands "edit"
+        $op = 'edit';
+      }
+      return comment_access($op,$parent);
+    break;
+    default:  
+      /*********** CASE 4: No relation (newly uploaded) or unknown ******/
+      // Grant for author only
+      // $e->uid is the uid out of the files table
+      if($e->uid == $user->uid) {
+        return TRUE;
+      }
+      //else
+      return FALSE;
+    break;
+  }
+  // we cant get here actually, anyway return FALSE
+  return FALSE;
+}
+
+/**
+ * Adding general styles like floating and default style
+ */
+function wysiwyg_mathjax_init() {
+  drupal_add_css(drupal_get_path('module', 'wysiwyg_mathjax') . '/plugins/mathjax/mathjax.css');
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function wysiwyg_mathjax_perm() {
+  return array('upload MathML file');
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function wysiwyg_mathjax_nodeapi(&$node, $op, $teaser) {
+  switch ($op) {
+    case 'load':
+      $output['mathjax_formula'] = _wysiwyg_mathjax_load($node);
+      return $output;
+    break;
+    case 'insert':
+    case 'update':
+      if (user_access('upload MathML file')) {
+        // remove the filter cache
+        _wysiwyg_mathjax_reset_filter_cache($node->format, $node->body);
+        _wysiwyg_mathjax_save($node);
+      }
+      break;
+    case 'delete':
+      _wysiwyg_mathjax_handle_node_delete($node->nid);
+    break;
+  }
+}
+
+/**
+ * Implementation of hook_comment().
+ */
+function wysiwyg_mathjax_comment(&$a1, $op) {
+  switch ($op) {
+    case 'insert':
+    case 'update':
+      $comment = $a1;
+      if (user_access('upload MathML file')) {
+        _wysiwyg_mathjax_save($comment);
+        _wysiwyg_mathjax_reset_filter_cache($comment->format, $comment->body);
+      }
+      break;
+  }
+}
+
+/**
+ * API: returns the filepath of a file
+ * @fid: the file id
+ */
+function wysiwyg_mathjax_get_formulaurl($fid) {
+  return db_result(db_query('SELECT filepath FROM {files} WHERE fid=%d', $fid));
+}
+
+/**
+ * API: loads a file-object using the path as key
+ * @path: the path of the file
+ */
+function wysiwyg_mathjax_get_file($path) {
+  return db_fetch_object(db_query('SELECT * from {files} where filepath="%s"', $path));
+}
+
+/**
+ * API: Returns the file-object
+ * @fid: the file-id
+ */
+function wysiwyg_mathjax_load_file($fid) {
+  return db_fetch_object(db_query('SELECT * from {files} where fid="%d"', $fid));
+}
+
+/**
+ * API: Use this method to get uploaded images as a 'list'.
+ * Images are sorted by date (youngest first).
+ * @limit: limit the result set to a specific number
+ * @uid: Only images uploaded by that user are returned
+ */
+function wysiwyg_mathjax_get_formulae($limit = NULL, $uid = NULL, $group = NULL) {
+  if ($limit != NULL) {
+    $limit = " LIMIT $limit";
+  }
+  if ($group != NULL) {
+    $group = " GROUP BY $group";
+  }
+  if ($uid != NULL) {
+    $result = db_query('SELECT f.*,w.* as parent_nid FROM {files} as f RIGHT JOIN {wysiwyg_mathjax_entity} AS w on w.fid = f.fid WHERE f.uid = %d' . $group . ' ORDER BY f.timestamp DESC' . $limit, $uid);
+  }
+  else {
+    $result = db_query('SELECT f.*,w.* as parent_nid FROM {files} as f RIGHT JOIN {wysiwyg_mathjax_entity} AS w on w.fid = f.fid' . $group . ' ORDER BY f.timestamp DESC' . $limit);
+  }
+
+  if ($result != FALSE) {
+    $formulae = array();
+    while ($row = db_fetch_array($result)) {
+      $formulae[] = $row;
+    };
+    return $formulae;
+  }
+  // else
+  return array();
+}
+
+/**
+ * Get all formulae of a node
+ * If a formula is used several times in a node, it is only returned once
+ */
+function wysiwyg_mathjax_get_formulae_by_vids($vids = array()) {
+  if (!is_array($vids) || count($vids) === 0) {
+    return array();
+  }
+  $result = db_query('
+  SELECT * FROM {wysiwyg_mathjax_entity}_revision AS wuir
+  	LEFT JOIN {wysiwyg_mathjax_entity} AS wui ON wuir.iid=wui.iid
+  	LEFT JOIN {files} AS f ON wui.fid=f.fid
+  	WHERE vid in (' . db_placeholders($vids, 'int') . ')
+  	GROUP BY f.fid', $vids);
+
+  if ($result != FALSE) {
+    $images = array();
+    while ($row = db_fetch_array($result)) {
+      $formulae[] = $row;
+    };
+    return $formulae;
+  }
+  // else
+  return array();
+}
+
+/**
+ * Implementation of hook_theme().
+ * wysiwyg_mathjax_render_formula: renders the formula for the node view
+ * wysiwyg_mathjax_render_wysiwyg: renders the view for the wysiwyg editor. DONT CHANGE THIS
+ */
+function wysiwyg_mathjax_theme() {
+  return array(
+    'wysiwyg_mathjax_render_formula_entity' => array(
+      'arguments' => array(
+        'formula_obj',
+        'arguments' => array(),
+      ),
+    ),
+    'wysiwyg_mathjax_render' => array(
+      'arguments' => array(
+        'formula_obj',
+        'arguments' => array(),
+    ),
+    ),
+    'wysiwyg_mathjax_render_meta' => array(
+      'arguments' => array(
+        'formula_obj',
+        'arguments' => array(),
+    ),
+    ),
+    'wysiwyg_mathjax_render_container' => array(
+      'arguments' => array(
+        'image',
+        'meta',
+        'formula_obj',
+        'arguments' => array(),
+      ),
+    ),
+    'wysiwyg_mathjax_render_wysiwyg' => array(
+      'arguments' => array(
+        'formula_obj',
+        'arguments' => array(),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function wysiwyg_mathjax_views_api() {
+  return array(
+    'api' => 2.0,
+  );
+}
+
+
+/**
+ * wysiwyg_mathjax_render_formula: renders the formula for the node view
+ */
+function theme_wysiwyg_mathjax_render_formula_entity($formula_obj, $arguments) {
+  $formula = theme('wysiwyg_mathjax_render_formula', $formula_obj, $arguments);
+  $meta = theme('wysiwyg_mathjax_render_meta', $formula_obj, $arguments);
+  return theme('wysiwyg_mathjax_render_container', $formula, $meta, $formula_obj, $arguments);
+}
+
+/**
+ * wysiwyg_mathjax_render_formula: renders the formula for the node view
+ */
+function theme_wysiwyg_mathjax_render_formula($formula_obj, $arguments) {
+  $attributes = array(
+    'class' => 'wysiwyg_mathjax ' . $formula_obj->style,
+    'style' => '',
+  );
+
+  $do_getsize = TRUE;
+  // If the use set custom sizes
+  if ($arguments['width'] != '') {
+    $attributes['width'] = $arguments['width'];
+  }
+
+  if ($arguments['height'] != '') {
+    $attributes['height'] = $arguments['height'];
+  }
+
+  if (isset($attributes['height']) || isset($attributes['width'])) {
+    $do_getsize = FALSE;
+  }
+
+  $inline_args = $formula_obj->iid;
+  drupal_alter('wysiwyg_mathjax_formula_attribute', $attributes, $formula_obj);
+
+  $output = theme('mathjax', $formula_obj->filepath, $inline_args, $formula_obj->title, $attributes, $do_getsize);
+  drupal_alter('wysiwyg_mathjax_rendered_formula', $output, $formula_obj);
+  return $output;
+}
+
+
+/**
+ * Renders the meta data of a formula. By default only the title
+ */
+function theme_wysiwyg_mathjax_render_meta($formula_obj, $arguments) {
+  $output = '';
+  if ($formula_obj->title != '') {
+    $output .= "<span class='formula_title'>{$formula_obj->title}</span>";
+  }
+  return $output;
+}
+
+/**
+ * Renders the meta container of a formula.
+ */
+function theme_wysiwyg_mathjax_render_container($formula, $meta, $formula_obj, $arguments) {
+  return "<span class='wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}'>$formula<span class='formula_meta'>$meta</span></span>";
+}
+
+/**
+ * wysiwyg_mathjax_render_wysiwyg: renders the view for the wysiwyg editor. DONT CHANGE THIS
+ */
+function theme_wysiwyg_mathjax_render_wysiwyg($formula_obj, $arguments = array()) {
+  $inline_args = $formula_obj->iid;
+  $attributes = array(
+    'class' => 'wysiwyg_mathjax ' . $formula_obj->alignment . ' ' . $formula_obj->style,
+  );
+  $attributes += $arguments;
+
+  $output = theme('mathjax', $formula_obj->filepath, $inline_args, $formula_obj->title, $attributes, NULL, FALSE);
+  return $output;
+}
+
+/**
+ * Returns all the formula styles to show in the selection
+ */
+function _wysiwyg_mathjax_get_formula_styles() {
+  // Must have the format: Descriptive=css_style,Descriptive2=css_style2..
+  $settings = variable_get('wysiwyg_mathjax_styles', '');
+  $styles = array();
+  if ($settings != '') {
+    $styles_lines = array();
+    $styles_lines = preg_split("/((\r(?!\n))|((?<!\r)\n)|(\r\n))/", $settings);
+    foreach ($styles_lines as $style) {
+      $style = explode('=', $style);
+      $styles[$style[1]] = t("!style", array('!style' => $style[0]));
+    }
+  }
+  drupal_alter('wysiwyg_mathjax_styles', $styles);
+  return $styles;
+}
+
+/**
+ * Checks if the current node has revisioning activated
+ */
+function _wysiwyg_mathjax_revisions_activated($type) {
+  // Is this content even in moderation?
+  $var = variable_get( "node_options_$type", array(0));
+  if (array_search('revision', $var)) {
+    return 1;
+  }
+  //else
+  return 0;
+}
+
+function _wysiwyg_mathjax_check_dependencies(&$requirements = NULL) {
+  $error = FALSE;
+  if (!is_array($requirements) && module_exists('devel_themer') && (user_access('access devel theme information') || user_access('access devel information'))) {
+    drupal_set_message(t('You cannot use wysiwyg_mathjax while the Theme Developer tool is enabled. It is highly recommended to <a href="!url">disable this module</a> unless it is actively being used.', array('!url' => url('admin/build/modules'))), 'error');
+  }
+
+  if (module_exists('jquery_ui')) {
+    $jquiv = jquery_ui_get_version();
+    if (!preg_match('@1\.[7,8]\.\d+@', $jquiv)) {
+      $msg = 'Your jquery ui library version is to old to use wysiwyg_mathjax. You need at least 1.7.x and you are currently running ' . $jquiv . ' Please read <a href="http://drupal.org/node/809812">this howto</a> on how to fix this.';
+      if (is_array($requirements)) {
+        $requirements['wyiwyg_mathjax_jquery_ui']['description'] = $msg;
+        $requirements['wyiwyg_mathjax_jquery_ui']['title'] = 'WYSIWYG mathjax: Jquery UI';
+        $requirements['wyiwyg_mathjax_jquery_ui']['severity'] = REQUIREMENT_ERROR;
+        $requirements['wyiwyg_mathjax_jquery_ui']['value'] = $jquiv;
+      }
+      else {
+        drupal_set_message($msg, 'error', FALSE);
+      }
+      $error = TRUE;
+    }
+  }
+  else {
+    drupal_set_message('You dont have <a href="http://drupal.org/project/jquery_ui">jquery_ui</a> installed, so wysiwyg_mathjax wont work at all. You will also need at least 1.7.x of the jquery ui library . Check <a href="http://drupal.org/node/809812">this howto</a> on how to fix this.', 'error');
+    $error = TRUE;
+  }
+
+  if (module_exists('jquery_update')) {
+    $jqv = jquery_update_get_version();
+    if (!preg_match('@1\.[3,4]\.\d+@', $jqv)) {
+      $msg = 'Your jquery version is to old to use wysiwyg_mathjax. Therefore you need to install <a href="http://drupal.org/project/jquery_update">jquery_update</a> 6.2.x, not jquery_update 6.1.x. Please read point 3 at <a href="http://drupal.org/node/808626">this howto</a> to fix this.';
+      if (is_array($requirements)) {
+        $requirements['wyiwyg_mathjax_jquery_update']['description'] = $msg;
+        $requirements['wyiwyg_mathjax_jquery_update']['title'] = 'WYSIWYG mathjax: JQuery Update';
+        $requirements['wyiwyg_mathjax_jquery_update']['severity'] = REQUIREMENT_ERROR;
+        $requirements['wyiwyg_mathjax_jquery_update']['value'] = $jqv;
+      }
+      else {
+        drupal_set_message($msg, 'error', FALSE);
+      }
+      $error = TRUE;
+    }
+  }
+  else {
+    drupal_set_message('You dont have <a href="http://drupal.org/project/jquery_update">jquery_update</a> installed, so wysiwyg_mathjax wont work at all. You need to install <a href="http://drupal.org/project/jquery_update">jquery_update</a> 6.2.x, not jquery_update 6.1.x. Please read point 3 at <a href="http://drupal.org/node/808626">this howto</a> to fix this.', 'error');
+    $error = TRUE;
+  }
+
+  $roles = user_roles(FALSE, 'upload MathML file');
+  if (!array($roles) || count($roles) == 0) {
+    $msg = 'You did not give any role the "upload MathML file" permission, so nobody can use wysiwyg_mathjax. Please read point 8 at <a href="http://drupal.org/node/808626">this howto</a> on how to fix this.';
+    if (is_array($requirements)) {
+      $requirements['wyiwyg_mathjax_user_permissions']['description'] = $msg;
+      $requirements['wyiwyg_mathjax_user_permissions']['title'] = 'WYSIWYG mathjax: User Permissions';
+      $requirements['wyiwyg_mathjax_user_permissions']['severity'] = REQUIREMENT_ERROR;
+      $requirements['wyiwyg_mathjax_user_permissions']['value'] = 'Not set';
+    }
+    else {
+      drupal_set_message($msg, 'error', FALSE);
+    }
+    $error = TRUE;
+  }
+  return $error;
+}
+
+
+function _wysiwyg_mathjax_reset_filter_cache($format, $text) {
+  $cid = $format . ':' . md5($text);
+  cache_clear_all($cid, 'cache_filter');
+}
+
+/**
+ * Converts a PHP variable into its Javascript equivalent.
+ * This function is used instead of drupal_to_js to avoid malformed unicode encoded data when using <, > or &.
+ */
+function _wysiwyg_mathjax_to_js($var) {
+  if (function_exists('json_encode')) {
+    return str_replace(array('<', '>', '&'), array('\u003c', '\u003e', '\u0026'), json_encode($var));
+  }
+  else {
+    return str_replace(array('\x3c', '\x3e', '\x26'), array('\u003c', '\u003e', '\u0026'), drupal_to_js($var));
+  }
+}
