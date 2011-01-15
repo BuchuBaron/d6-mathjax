@@ -71,6 +71,7 @@ Drupal.wysiwyg.plugins.mathjax = {
     var dialogIframe = Drupal.jqui_dialog.iframeSelector();
     var btns = {};
     btns[Drupal.t('Insert')] = function () {
+alert("In the add_form");
       // well lets test if an image has been selected
       var form = $(dialogIframe).contents().find('form#wysiwyg-mathjax-edit-form').size();
       if (form == 0) {
@@ -90,6 +91,7 @@ Drupal.wysiwyg.plugins.mathjax = {
         },
         success : function(data,status,xhr,jq) {
             iid = data.data.iid;
+alert("success?");
             if(!iid) {
               return;
             }
@@ -123,6 +125,7 @@ Drupal.wysiwyg.plugins.mathjax = {
     // Create buttons.
     var dialogIframe = Drupal.jqui_dialog.iframeSelector();
     var btns = {};
+alert("In mathjax update form");
     // Update button.
     btns[Drupal.t('Update')] = function () {
       var iid = 0;

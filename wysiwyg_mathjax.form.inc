@@ -23,7 +23,7 @@ function _wysiwyg_mathjax_prepare_main_form(&$form, $form_state) {
   $settings = array(
     'current_form' => $form['form_build_id']['#value'],
     // only set revisions new, when we actually edit a node. It does not make sense for new node nor for comments
-    'revisions' => (int) (($form['#id'] != 'comment-form') && _wysiwyg_imagegupload_revisions_activated($form['#node']->type) && !empty($form['#node']->nid))
+    'revisions' => (int) (($form['#id'] != 'comment-form') && _wysiwyg_mathjax_revisions_activated($form['#node']->type) && !empty($form['#node']->nid))
   );
 
   drupal_add_js(array('wysiwyg_mathjax' => $settings), 'setting');
@@ -45,7 +45,7 @@ function wysiwyg_mathjax_upload_form(&$form_state, $parent_build_id) {
 
   $form = array();
   $form['#attributes'] = array('enctype' => "multipart/form-data");
-  $form['image_upload'] = array(
+  $form['file_upload'] = array(
     '#type' => 'fieldset',
     '#title' => t('Upload MathML file'),
     '#prefix' => '<div id="file_upload_group">',
@@ -57,7 +57,7 @@ function wysiwyg_mathjax_upload_form(&$form_state, $parent_build_id) {
     '#value' => $parent_build_id
   );
 
-  $form['image_upload']['wysiwyg_mathjax_file'] = array(
+  $form['file_upload']['wysiwyg_mathjax_file'] = array(
     '#type' => 'file',
     '#title' => t('Select a MathML file to upload'),
     '#size' => 22,
@@ -90,6 +90,7 @@ function wysiwyg_mathjax_edit_form(&$form_state, $iid, $node_form_build_id, $reb
   drupal_set_title(t('Formula details'));
 
   $formula_obj = _wysiwyg_mathjax_load_inline_entity($iid);
+rs_debug("In wysiwyg_mathjax.module 93: formula_obj=", $formula_obj);
   if ($formula_obj == FALSE) {
     drupal_set_message(t('Could not find formula in the database'), 'warning');
     return array();
@@ -107,7 +108,10 @@ function wysiwyg_mathjax_edit_form(&$form_state, $iid, $node_form_build_id, $reb
 
   // Create the formula detail form.
   $form['#cache'] = TRUE;
-  $form['#attributes'] = array('enctype' => "multipart/form-data");
+  $form['#attributes'] = array(
+    'enctype' => "multipart/form-data",
+    'id' => 'wysiwyg-mathjax-edit-form',
+  );
   // Render the formula for the preview in the form. (yeah right!)
 //  $img = theme('imagecache', 'wysiwyg_mathjax_preview', $defaults['filepath'], $iid, $defaults['title'], $attributes, TRUE, FALSE);
   // Load the details form.
@@ -174,7 +178,7 @@ function wysiwyg_mathjax_edit_form_submit($form, &$state) {
 function _wysiwyg_mathjax_details_form($formula, $iid, $defaults = array()) {
   $form = array();
 
-  $form['image_upload_details'] = array(
+  $form['file_upload_details'] = array(
     '#type' => 'fieldset',
     '#title' => t('Formula details'),
     '#prefix' => '<div id="formula_details">',

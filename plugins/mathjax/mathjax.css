@@ -95,7 +95,7 @@ div.mathjax_styles_spacing_20_black_border .image_title, div.mathjax_styles_blac
   margin-left:5px;
 }
 
-#edit-wysiwyg-imageupload-file-wrapper {
+#edit-wysiwyg-mathjax-file-wrapper {
   display:inline;
 }
 
@@ -107,7 +107,7 @@ div.mathjax_styles_spacing_20_black_border .image_title, div.mathjax_styles_blac
   width:500px;
 }
 
-#wysiwyg-imageupload-edit-form {
+#wysiwyg-mathjax-edit-form {
   width:700px;
 }
 
