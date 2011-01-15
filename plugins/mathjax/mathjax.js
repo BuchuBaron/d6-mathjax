@@ -103,15 +103,15 @@ Drupal.wysiwyg.plugins.mathjax = {
     btns[Drupal.t('Cancel')] = function () {
       $(this).dialog("close");
     };
-    var parent_build_id = Drupal.settings.wysiwyg_imageupload.current_form;
+    var parent_build_id = Drupal.settings.wysiwyg_mathjax.current_form;
     // Location, where to fetch the dialog.
-    var aurl = Drupal.settings.basePath + 'index.php?q=wysiwyg_imageupload/upload/' + parent_build_id;
+    var aurl = Drupal.settings.basePath + 'index.php?q=wysiwyg_mathjax/upload/' + parent_build_id;
     // Open the dialog, load the form.
     Drupal.jqui_dialog.open({
       url: aurl,
       buttons: btns,
       width: 540,
-      namespace: 'wysiwyg_imageupload'
+      namespace: 'wysiwyg_mathjax'
     });
   },
 
@@ -126,12 +126,12 @@ Drupal.wysiwyg.plugins.mathjax = {
     // Update button.
     btns[Drupal.t('Update')] = function () {
       var iid = 0;
-      $(dialogIframe).contents().find('form#wysiwyg-imageupload-edit-form').ajaxSubmit({
+      $(dialogIframe).contents().find('form#wysiwyg-mathjax-edit-form').ajaxSubmit({
         dataType : 'json',
         method: 'post',
         data: { 
         	revisions: options.revisions, 
-        	parent_build_id: Drupal.settings.wysiwyg_imageupload.current_form, 
+        	parent_build_id: Drupal.settings.wysiwyg_mathjax.current_form, 
         	submitimagedetails : 'JSinsert' 
 		},
         async: false,
@@ -152,13 +152,13 @@ Drupal.wysiwyg.plugins.mathjax = {
     };
 
     // Location, where to fetch the dialog.
-    var aurl = Drupal.settings.basePath + 'index.php?q=wysiwyg_imageupload/edit/' + options.iid +'/' + Drupal.settings.wysiwyg_imageupload.current_form;
+    var aurl = Drupal.settings.basePath + 'index.php?q=wysiwyg_mathjax/edit/' + options.iid +'/' + Drupal.settings.wysiwyg_mathjax.current_form;
     // Finally open the dialog.
     Drupal.jqui_dialog.open({
       url: aurl,
       buttons: btns,
       width: 540,
-      namespace: 'wysiwyg_imageupload'
+      namespace: 'wysiwyg_mathjax'
     });
   },
 
@@ -231,7 +231,7 @@ Drupal.wysiwyg.plugins.mathjax = {
   get_rendered_wysiwyg_formula: function(iid) {
       var result = '';
       $.ajax( {
-        url: Drupal.settings.basePath + 'index.php?q=ajax/wysiwyg_imgupl/render_wysiwyg/' + iid,
+        url: Drupal.settings.basePath + 'index.php?q=ajax/wysiwyg_mathjax/render_wysiwyg/' + iid,
         async: false,
         success: function (data, status) {
           result = $(data.data).mathjaxOuterHTML();

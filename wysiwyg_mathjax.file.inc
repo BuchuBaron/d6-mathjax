@@ -1,6 +1,6 @@
 <?php
 /**
- * Uploading a image and calling the file_insert hooks.
+ * Uploading a formula MathML file and calling the file_insert hooks.
  * @return: Returns the uploaded file as an object
  */
 function _wysiwyg_mathjax_upload_file() {
@@ -16,21 +16,19 @@ function _wysiwyg_mathjax_upload_file() {
     return NULL;
   }
 
-  $validators = array(
-    'file_validate_is_image' => array()
-  );
+  $validators = array();
   $max_filesize = variable_get('wysiwyg_mathjax_max_filesize', 0) * 1000;
   if($max_filesize > 0) {
     $validators['file_validate_size'] =  array( $max_filesize , 0);
   }
   $file = NULL;
-  if (user_access('use wysiwyg image upload') && $file = file_save_upload('wysiwyg_mathjax_file', $validators, $dest, FILE_EXISTS_RENAME)) {
-    foreach (module_implements('wysiwyg_mathjax_image_uploaded') as $module) {
-      $function =  $module .'_wysiwyg_mathjax_image_uploaded';
+  if (user_access('upload MathML file') && $file = file_save_upload('wysiwyg_mathjax_file', $validators, $dest, FILE_EXISTS_RENAME)) {
+    foreach (module_implements('wysiwyg_mathjax_file_uploaded') as $module) {
+      $function =  $module .'_wysiwyg_mathjax_file_uploaded';
       $function($file);
     }
 
-    $file->list = 0;  // do not list the images
+    $file->list = 0;  // do not list the files
     $file->description = $file->filename;
     $file->weight = 0;
     $file->new = TRUE;
@@ -112,10 +110,10 @@ function _wysiwyg_mathjax_save(&$entity) {
   }
   // how does that look like for a comment?
   if (!empty($entity->cid) && $entity->cid > 0) {
-    _wysiwyg_imagegupload_save_images($entity, $entity->comment);
+    _wysiwyg_mathjax_save_files($entity, $entity->comment);
   }
   else {
-    _wysiwyg_imagegupload_save_images($entity, $entity->body);
+    _wysiwyg_mathjax_save_files($entity, $entity->body);
 
     $node = (array) $entity;
     foreach ($node as $key => $field) {
@@ -123,7 +121,7 @@ function _wysiwyg_mathjax_save(&$entity) {
         foreach ($field as $index => $field_item) {
           if (!empty($field_item['value'])) {
             $value = $field_item['value'];
-            _wysiwyg_imagegupload_save_images($entity, $value);
+            _wysiwyg_mathjax_save_files($entity, $value);
           }
         }
       }
@@ -134,8 +132,8 @@ function _wysiwyg_mathjax_save(&$entity) {
 /**
  * Auxiliary function for _wysiwyg_mathjax_save().
  */
-function _wysiwyg_imagegupload_save_images(&$entity, $value) {
-  $images = array();
+function _wysiwyg_mathjax_save_files(&$entity, $value) {
+  $files = array();
   preg_match_all(_wysiwyg_mathjax_filter_pattern(), $value, $matches);
 
   if(empty($matches)) {
@@ -145,10 +143,10 @@ function _wysiwyg_imagegupload_save_images(&$entity, $value) {
   for($i=0; $i<count($matches[0]); $i++) {
     $iid =$matches[1][$i];
     // remove the widget from the array as all the restovers will be deleted then
-    $images[$iid] = _wysiwyg_mathjax_load_inline_entity($iid);
+    $files[$iid] = _wysiwyg_mathjax_load_inline_entity($iid);
   }
 
-  foreach ($images as $iid => $file) {
+  foreach ($files as $iid => $file) {
     // Convert file to object for compatibility.
     $file = (object)$file;
     file_set_status($file, FILE_STATUS_PERMANENT);
@@ -172,7 +170,7 @@ function _wysiwyg_imagegupload_save_images(&$entity, $value) {
     drupal_write_record('wysiwyg_mathjax_entity', $data, array('iid'));
       // Call the alter hooks to react on the current attached image entity.
     $data = (object) $data;
-    drupal_alter('wysiwyg_mathjax_image_entity_attached', $data);
+    drupal_alter('wysiwyg_mathjax_entity_attached', $data);
   }
 }
 
