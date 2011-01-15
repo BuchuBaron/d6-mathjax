@@ -9,7 +9,7 @@ Drupal.wysiwyg.plugins.mathjax = {
   */
   isNode: function (node) {
     $node = this.getRepresentitiveNode(node);
-    return $node.is('img.wysiwyg_imageupload');
+    return $node.is('math.wysiwyg_mathjax');
   },
 
   /* We need this due all the special cases in the editors */
@@ -38,14 +38,14 @@ Drupal.wysiwyg.plugins.mathjax = {
         id: instanceId,
         action: 'insert',
         // we need that for changing the mode in the edit form to create a new iid if revisioned
-        revisions: Drupal.settings.wysiwyg_imageupload.revisions
+        revisions: Drupal.settings.wysiwyg_mathjax.revisions
       };
       var $node = null;
       if ('node' in data) {
         $node = this.getRepresentitiveNode(data.node);
       }
 
-      if ($node != null && $node.is('img') && $node.hasClass('wysiwyg_imageupload')) {
+      if ($node != null && $node.is('math') && $node.hasClass('wysiwyg_mathjax')) {
         $n = $(data.node);
         options.iid = decodeURIComponent(data.node.getAttribute('alt'));
         options.action = 'update';
@@ -72,21 +72,21 @@ Drupal.wysiwyg.plugins.mathjax = {
     var btns = {};
     btns[Drupal.t('Insert')] = function () {
       // well lets test if an image has been selected
-      var form = $(dialogIframe).contents().find('form#wysiwyg-imageupload-edit-form').size();
+      var form = $(dialogIframe).contents().find('form#wysiwyg-mathjax-edit-form').size();
       if (form == 0) {
-        alert(Drupal.t("Please select an image to upload first"));
+        alert(Drupal.t("Please select a formula to upload first"));
         return;
       }
       // else
       var iid = 0;
-      var form = $(dialogIframe).contents().find('form#wysiwyg-imageupload-edit-form');
+      var form = $(dialogIframe).contents().find('form#wysiwyg-mathjax-edit-form');
       form.ajaxSubmit({
         dataType : 'json',
         method: 'post',
         async: false,
         data: { 
         	submitimagedetails : 'JSinsert', 
-        	parent_build_id: Drupal.settings.wysiwyg_imageupload.current_form 
+        	parent_build_id: Drupal.settings.wysiwyg_mathjax.current_form 
         },
         success : function(data,status,xhr,jq) {
             iid = data.data.iid;
@@ -181,7 +181,7 @@ Drupal.wysiwyg.plugins.mathjax = {
   attach: function(content, pluginSettings, id) {
     var plugin = this;
     var iids = [];
-    content = content.replace(/\[\[wysiwyg_imageupload:(\d+):([^\]]*?)\]\]/g, function(orig, match) {
+    content = content.replace(/\[\[wysiwyg_mathjax:(\d+):([^\]]*?)\]\]/g, function(orig, match) {
       iids.push(match);
       return orig;
     });
@@ -194,7 +194,7 @@ Drupal.wysiwyg.plugins.mathjax = {
     var images = plugin.get_rendered_wysiwyg_images(iids);
 
     content = content.replace(
-      /\[\[wysiwyg_imageupload:(\d+):([^\]]*?)\]\]/g,
+      /\[\[wysiwyg_mathjax:(\d+):([^\]]*?)\]\]/g,
       function(orig, iid, attributes) {
         // Render arguments.
         attributes = attributes.split(',');
@@ -212,7 +212,7 @@ Drupal.wysiwyg.plugins.mathjax = {
     var plugin = this;
     content = '<div>'+content+'</div>';
     var $content = $(content);
-    $content.find('img.wysiwyg_imageupload').map(
+    $content.find('math.wysiwyg_mathjax').map(
       function(i, img) {
         var $img = $(img);
         // Thats the inlineID we use for extracting the meta data from the database
@@ -220,7 +220,7 @@ Drupal.wysiwyg.plugins.mathjax = {
         
         var attributes = plugin.get_inline_attributes($img);
         var inlineAttribs = attributes.join(',');
-        $(img, $content).replaceWith('[[wysiwyg_imageupload:'+inlineID+':' + inlineAttribs + ']]');
+        $(img, $content).replaceWith('[[wysiwyg_mathjax:'+inlineID+':' + inlineAttribs + ']]');
       }
     );
     content = $content.html();
@@ -228,7 +228,7 @@ Drupal.wysiwyg.plugins.mathjax = {
     return content;
   },
 
-  get_rendered_wysiwyg_image: function(iid) {
+  get_rendered_wysiwyg_formula: function(iid) {
       var result = '';
       $.ajax( {
         url: Drupal.settings.basePath + 'index.php?q=ajax/wysiwyg_imgupl/render_wysiwyg/' + iid,
@@ -242,10 +242,10 @@ Drupal.wysiwyg.plugins.mathjax = {
     return result;
   },
 
-  get_rendered_wysiwyg_images: function(iids) {
+  get_rendered_wysiwyg_formulae: function(iids) {
     var result = [];
     $.ajax( {
-        url: Drupal.settings.basePath + 'index.php?q=ajax/wysiwyg_imgupl/render_wysiwyg_images/' + iids.join(','),
+        url: Drupal.settings.basePath + 'index.php?q=ajax/wysiwyg_mathjax/render_wysiwyg_formulae/' + iids.join(','),
         async: false,
         success: function (data, status) {
           result = data.data;

@@ -13,7 +13,7 @@ function wysiwyg_mathjax_mathjax_plugin() {
         'height' => 300,
       ),
     ),
-    'extended_valid_elements' => array('math'),
+    'extended_valid_elements' => array('math', 'tex'),
   );
   return $plugins;
 }
