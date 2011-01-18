@@ -75,7 +75,7 @@ function wysiwyg_mathjax_upload_form_validate(&$form, &$state) {
   // If the upload was fine, redirect to the details form
   $state['submitted'] = TRUE;
   $state['values']['iid'] = $iid;
-  $state['values']['redirect'] = 'wysiwyg_mathjax/edit/' . $iid .'/' . $state['values']['parent_build_id'];
+  $state['values']['redirect'] = 'wysiwyg_mathjax/edit/' . $iid .'/' . $state['values']['parent_build_id'] . '?XDEBUG_SESSION_START=1';
 }
 
 function wysiwyg_mathjax_upload_form_submit($form, &$form_state) {
@@ -90,7 +90,6 @@ function wysiwyg_mathjax_edit_form(&$form_state, $iid, $node_form_build_id, $reb
   drupal_set_title(t('Formula details'));
 
   $formula_obj = _wysiwyg_mathjax_load_inline_entity($iid);
-rs_debug("In wysiwyg_mathjax.module 93: formula_obj=", $formula_obj);
   if ($formula_obj == FALSE) {
     drupal_set_message(t('Could not find formula in the database'), 'warning');
     return array();
@@ -110,10 +109,9 @@ rs_debug("In wysiwyg_mathjax.module 93: formula_obj=", $formula_obj);
   $form['#cache'] = TRUE;
   $form['#attributes'] = array(
     'enctype' => "multipart/form-data",
-    'id' => 'wysiwyg-mathjax-edit-form',
   );
   // Render the formula for the preview in the form. (yeah right!)
-//  $img = theme('imagecache', 'wysiwyg_mathjax_preview', $defaults['filepath'], $iid, $defaults['title'], $attributes, TRUE, FALSE);
+  $formula = theme('imagecache', 'wysiwyg_mathjax_preview', $defaults['filepath'], $iid, $defaults['title'], $attributes, TRUE, FALSE);
   // Load the details form.
   $form += _wysiwyg_mathjax_details_form($formula, $iid, $defaults);
   $form['rebuild_iid'] = array(
@@ -178,7 +176,7 @@ function wysiwyg_mathjax_edit_form_submit($form, &$state) {
 function _wysiwyg_mathjax_details_form($formula, $iid, $defaults = array()) {
   $form = array();
 
-  $form['file_upload_details'] = array(
+  $form['formula_upload_details'] = array(
     '#type' => 'fieldset',
     '#title' => t('Formula details'),
     '#prefix' => '<div id="formula_details">',
@@ -197,15 +195,14 @@ function _wysiwyg_mathjax_details_form($formula, $iid, $defaults = array()) {
     '#type' => 'select',
     '#title' => t('Formula alignment'),
     '#options' => array(
-      'imgupl_floating_left' => theme('image',"$m/images/left_float.png", $t = t('Image on left, text on right'), $t),
-      'imgupl_floating_none_left' => theme('image',"$m/images/none_left_float.png", $t = t('Image is inline with the text (left)'), $t),
-      'imgupl_floating_none' => theme('image',"$m/images/none_float.png", $t = t('Image is inline with the text (none)'), $t),
-      'imgupl_floating_none_right' => theme('image',"$m/images/none_right_float.png", $t = t('Image is inline with the text (right)'), $t),
-      'imgupl_floating_right' => theme('image',"$m/images/right_float.png", $t = t('Image on right, text on left'), $t),      
+      'mathjax_floating_left' => theme('image',"$m/images/left_float.png", $t = t('Image on left, text on right'), $t),
+      'mathjax_floating_none_left' => theme('image',"$m/images/none_left_float.png", $t = t('Image is inline with the text (left)'), $t),
+      'mathjax_floating_none' => theme('image',"$m/images/none_float.png", $t = t('Image is inline with the text (none)'), $t),
+      'mathjax_floating_none_right' => theme('image',"$m/images/none_right_float.png", $t = t('Image is inline with the text (right)'), $t),
+      'mathjax_floating_right' => theme('image',"$m/images/right_float.png", $t = t('Image on right, text on left'), $t),      
     ),
     '#default_value' => $defaults['alignment'],
- //   '#after_build' => array('drupalwiki_imageselect_element_register'),
-    '#after_build' => array('mathjax_formula_element_register'), // TODO
+    '#after_build' => array('drupalwiki_imageselect_element_register'),
   );
 
   // We group all those extras into this fieldset to hide them from the general UI.
@@ -229,21 +226,21 @@ function _wysiwyg_mathjax_details_form($formula, $iid, $defaults = array()) {
   }
 
   // this is the container for our preview-image
-  $form['formula_details_form']['preview'] = array(
+  $form['formula_upload_details']['preview'] = array(
     '#type' => 'fieldset',
     '#title' => t('Preview'),
     '#attributes' => array('id' => 'formula_preview'),
     '#collapsible' => false
   );
-  $form['formula_details_form']['preview'] ['uploadedFormula'] = array(
+  $form['formula_upload_details']['preview'] ['uploadedFormula'] = array(
     '#prefix' => '<div >',
     '#suffix' => '</div>',
-    '#value' => $img
+    '#value' => $formula,
   );
 
   // This is a fake submit button, thats why "access false" is used.
   // This is because we use an ajax form submit.
-  $form['formula_details_form']['buttons']['submitformuladetails'] = array(
+  $form['formula_upload_details']['buttons']['submitformuladetails'] = array(
     '#type' => 'submit',
     '#value' => 'JSinsert', // t() not needed here, see comment below.
     '#access' => FALSE,

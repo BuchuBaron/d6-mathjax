@@ -71,7 +71,6 @@ Drupal.wysiwyg.plugins.mathjax = {
     var dialogIframe = Drupal.jqui_dialog.iframeSelector();
     var btns = {};
     btns[Drupal.t('Insert')] = function () {
-alert("In the add_form");
       // well lets test if an image has been selected
       var form = $(dialogIframe).contents().find('form#wysiwyg-mathjax-edit-form').size();
       if (form == 0) {
@@ -91,14 +90,14 @@ alert("In the add_form");
         },
         success : function(data,status,xhr,jq) {
             iid = data.data.iid;
-alert("success?");
             if(!iid) {
               return;
             }
           }
         }
       );
-      Drupal.wysiwyg.plugins.mathjax.createImageInContent(iid,instanceId);
+      alert("Calling Drupal.wysiwyg.plugins.mathjax.createFormulaInContent(iid,instanceId) with " + iid + ", " + instanceId);
+      Drupal.wysiwyg.plugins.mathjax.createFormulaInContent(iid,instanceId);
       $(this).dialog("close");
     };
 
@@ -146,7 +145,7 @@ alert("In mathjax update form");
           }
         }
       );
-      Drupal.wysiwyg.plugins.mathjax.createImageInContent(iid,instanceId);
+      Drupal.wysiwyg.plugins.mathjax.createFormulaInContent(iid,instanceId);
       $(this).dialog("close");
     };
     // Cancel button
@@ -168,8 +167,9 @@ alert("In mathjax update form");
   /*
   * Fetches the imagecache preset representitive and insert it all th way down into the current editor
   */
-  createImageInContent: function (iid,editor_id) {
-    Drupal.wysiwyg.plugins.mathjax.insertIntoEditor(this.get_rendered_wysiwyg_image(iid),editor_id);
+  createFormulaInContent: function (iid, editor_id) {
+    alert("calling Drupal.wysiwyg.plugins.mathjax.insertIntoEditor(this.get_rendered_wysiwyg_formula(iid),editor_id) with values " + this.get_rendered_wysiwyg_formula(iid) + ", " + editor_id); 
+    Drupal.wysiwyg.plugins.mathjax.insertIntoEditor(this.get_rendered_wysiwyg_formula(iid),editor_id);
   },
 
   /*
@@ -194,7 +194,7 @@ alert("In mathjax update form");
     }
 
     iids = plugin.uniqueArray(iids);
-    var images = plugin.get_rendered_wysiwyg_images(iids);
+    var images = plugin.get_rendered_wysiwyg_formulae(iids);
 
     content = content.replace(
       /\[\[wysiwyg_mathjax:(\d+):([^\]]*?)\]\]/g,

@@ -447,8 +447,9 @@ function theme_wysiwyg_mathjax_render_wysiwyg($formula_obj, $arguments = array()
     'class' => 'wysiwyg_mathjax ' . $formula_obj->alignment . ' ' . $formula_obj->style,
   );
   $attributes += $arguments;
-
-  $output = theme('mathjax', $formula_obj->filepath, $inline_args, $formula_obj->title, $attributes, NULL, FALSE);
+ 
+  // don't call something else, just do it here... TODO XXX
+  $output = theme('wysiwyg_mathjax', $formula_obj->filepath, $inline_args, $formula_obj->title, $attributes, NULL, FALSE);
   return $output;
 }
 

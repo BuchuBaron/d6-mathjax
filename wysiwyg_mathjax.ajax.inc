@@ -36,10 +36,11 @@ function _wysiwyg_mathjax_entity_upload($node_form_build_id) {
 }
 
 /**
- * Ajax callback to render a image for the wysiwyg editor
+ * Ajax callback to render a formula for the wysiwyg editor
  */
 function _wysiwyg_mathjax_render_wysiwyg($iid) {
   $formula_obj = _wysiwyg_mathjax_load_inline_entity($iid);
+  rs_debug("ajax:43: formula_obj=", $formula_obj);
   $output = theme('wysiwyg_mathjax_render_wysiwyg', $formula_obj, array());
 
   $GLOBALS['devel_shutdown'] = FALSE;
