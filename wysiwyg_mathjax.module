@@ -449,8 +449,21 @@ function theme_wysiwyg_mathjax_render_wysiwyg($formula_obj, $arguments = array()
   $attributes += $arguments;
  
   // don't call something else, just do it here... TODO XXX
-  $output = theme('wysiwyg_mathjax', $formula_obj->filepath, $inline_args, $formula_obj->title, $attributes, NULL, FALSE);
-  return $output;
+  $fullpath = $base_path . $formula_obj->filepath;
+  $matharray = file($fullpath);
+  rs_debug("w_m.module 456: fullpath=$fullpath, matharray=", $matharray);
+  // Cleanup - remove xml line and annotation
+  foreach ($matharray as $key => $value) {
+    if (stristr($value, '<?xml') !== false) { // found xml doctype line
+      unset($matharray[$key]);
+    }
+    elseif (stristr($value, 'annotation') !== false) {
+      unset($matharray[$key]);
+    }
+  }
+  $retval = join("", $matharray);
+  rs_debug("retval=$retval");
+  return($retval);
 }
 
 /**
