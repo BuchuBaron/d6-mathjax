@@ -93,7 +93,8 @@ function wysiwyg_mathjax_menu() {
  * @brief Implementation of hook_init
  */
 function wysiwyg_mathjax_init() {
-  drupal_add_js(drupal_get_path('module', 'wysiwyg_mathjax').'/libraries/MathJax/MathJax.js');
+  drupal_add_css(drupal_get_path('module', 'wysiwyg_mathjax') . '/plugins/mathjax/mathjax.css');
+//  drupal_add_js(drupal_get_path('module', 'wysiwyg_mathjax') . '/libraries/MathJax/MathJax.js');
 }
 
 /**
@@ -202,13 +203,6 @@ function _wysiwyg_mathjax_access($iid, $op) {
 }
 
 /**
- * Adding general styles like floating and default style
- */
-function wysiwyg_mathjax_init() {
-  drupal_add_css(drupal_get_path('module', 'wysiwyg_mathjax') . '/plugins/mathjax/mathjax.css');
-}
-
-/**
  * Implementation of hook_perm().
  */
 function wysiwyg_mathjax_perm() {
@@ -303,7 +297,6 @@ function wysiwyg_mathjax_get_formulae($limit = NULL, $uid = NULL, $group = NULL)
     while ($row = db_fetch_array($result)) {
       $formulae[] = $row;
     };
-    rs_debug("render_formulae:298: row=", $row);
     return $formulae;
   }
   // else
@@ -399,12 +392,8 @@ function wysiwyg_mathjax_views_api() {
  */
 function theme_wysiwyg_mathjax_render_formula_entity($formula_obj, $arguments) {
   $formula = theme('wysiwyg_mathjax_render_formula', $formula_obj, $arguments);
-  rs_debug("388:formula=$formula");
   $meta = theme('wysiwyg_mathjax_render_meta', $formula_obj, $arguments);
-  rs_debug("meta=$meta");
   $output = theme('wysiwyg_mathjax_render_container', $formula, $meta, $formula_obj, $arguments);
-  $output .= '<div style="color:red"><strong>391: Be Bold and Red</strong></div>';
-  rs_debug("output=$output");
   return $output;
 }
 
@@ -412,7 +401,6 @@ function theme_wysiwyg_mathjax_render_formula_entity($formula_obj, $arguments) {
  * wysiwyg_mathjax_render_formula: renders the formula for the node view
  */
 function theme_wysiwyg_mathjax_render_formula($formula_obj, $arguments) {
-rs_debug("401: calling render_formula with formula_obj=", $formula_obj);
   $attributes = array(
     'class' => 'wysiwyg_mathjax ' . $formula_obj->style,
     'style' => '',
@@ -420,8 +408,6 @@ rs_debug("401: calling render_formula with formula_obj=", $formula_obj);
 
   drupal_alter('wysiwyg_mathjax_rendered_formula', $output, $formula_obj);
   $output = _wysiwyg_mathjax_get_mathml($formula_obj, $attributes);
-  $output .= '<div style="color=blue;bgcolor=yellow"><strong>407: After Math tag</strong></div>';
-rs_debug("410: returning with formula=", $output);
   return $output;
 }
 
@@ -441,7 +427,6 @@ function theme_wysiwyg_mathjax_render_meta($formula_obj, $arguments) {
  * Renders the meta container of a formula.
  */
 function theme_wysiwyg_mathjax_render_container($formula, $meta, $formula_obj, $arguments) {
-  rs_debug("429: render_container with formula=", $formula);
   return "<span class='wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}'>$formula<span class='formula_meta'>$meta</span></span>";
 }
 
@@ -471,9 +456,9 @@ function _wysiwyg_mathjax_get_mathml($formula_obj, $attributes) {
     elseif (stristr($value, 'annotation') !== false) {
       unset($matharray[$key]);
     }
-    elseif (stristr($value, '<math') !== false) {
-      $matharray[$key] = preg_replace('/<math/i', '<math class="wysiwyg_mathjax" ', $value);
-    }
+//    elseif (stristr($value, '<math') !== false) {
+//      $matharray[$key] = preg_replace('/<math/i', '<math class="wysiwyg_mathjax" ', $value);
+//    }
   }
   array_unshift($matharray, '<div class="wysiwyg_mathjax" id="'.$formula_obj->iid.'">');
   array_push($matharray, '</div>');

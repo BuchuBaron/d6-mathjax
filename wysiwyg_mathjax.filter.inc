@@ -3,7 +3,6 @@
  * Implementation of hook_filter().
  */
 function wysiwyg_mathjax_filter($op, $delta = 0, $format = -1, $text = '') {
-rs_debug("Calling function wysiwyg_mathjax_filter($op, $delta = 0, $format = -1, $text = '')");
   switch ($op) {
     case 'list':
       return array(0 => t('Drupal Wiki inline-formulae'));
