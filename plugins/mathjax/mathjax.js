@@ -9,7 +9,8 @@ Drupal.wysiwyg.plugins.mathjax = {
   */
   isNode: function (node) {
     $node = this.getRepresentitiveNode(node);
-    return $node.is('math.wysiwyg_mathjax');
+    alert("isNode returns "+ $node.is('math.wysiwyg_mathjax'));
+    return $node.is('div.wysiwyg_mathjax');
   },
 
   /* We need this due all the special cases in the editors */
@@ -64,7 +65,7 @@ Drupal.wysiwyg.plugins.mathjax = {
   },
 
   /*
-  * Open a dialog and present the add-image form.
+  * Open a dialog and present the add-formula form.
   */
   add_form: function (data, settings, instanceId) {
     // Create the buttons
@@ -96,7 +97,6 @@ Drupal.wysiwyg.plugins.mathjax = {
           }
         }
       );
-      alert("Calling Drupal.wysiwyg.plugins.mathjax.createFormulaInContent(iid,instanceId) with " + iid + ", " + instanceId);
       Drupal.wysiwyg.plugins.mathjax.createFormulaInContent(iid,instanceId);
       $(this).dialog("close");
     };
@@ -165,11 +165,10 @@ alert("In mathjax update form");
   },
 
   /*
-  * Fetches the imagecache preset representitive and insert it all th way down into the current editor
+  * Fetches the formula and insert it all th way down into the current editor
   */
   createFormulaInContent: function (iid, editor_id) {
-    alert("calling Drupal.wysiwyg.plugins.mathjax.insertIntoEditor(this.get_rendered_wysiwyg_formula(iid),editor_id) with values " + this.get_rendered_wysiwyg_formula(iid) + ", " + editor_id); 
-    Drupal.wysiwyg.plugins.mathjax.insertIntoEditor(this.get_rendered_wysiwyg_formula(iid),editor_id);
+    Drupal.wysiwyg.plugins.mathjax.insertIntoEditor(this.get_rendered_wysiwyg_formula(iid), editor_id);
   },
 
   /*
@@ -182,6 +181,7 @@ alert("In mathjax update form");
   },
 
   attach: function(content, pluginSettings, id) {
+    alert("attaching: " + content);
     var plugin = this;
     var iids = [];
     content = content.replace(/\[\[wysiwyg_mathjax:(\d+):([^\]]*?)\]\]/g, function(orig, match) {
@@ -194,7 +194,7 @@ alert("In mathjax update form");
     }
 
     iids = plugin.uniqueArray(iids);
-    var images = plugin.get_rendered_wysiwyg_formulae(iids);
+    var formulae = plugin.get_rendered_wysiwyg_formulae(iids);
 
     content = content.replace(
       /\[\[wysiwyg_mathjax:(\d+):([^\]]*?)\]\]/g,
@@ -205,33 +205,39 @@ alert("In mathjax update form");
             var attribute = attributes[i].split('=');
             attributes[i] = attribute[0] + '="' + attribute[1] + '"';
         }
-        return images[iid].replace('wysiwyg_placeholder="1"', attributes.join(' '));
+        return formulae[iid].replace('wysiwyg_placeholder="1"', attributes.join(' '));
       }
     );
     return content;
   },
 
   detach: function (content, pluginSettings, id)  {
+    alert("detaching " + content);
     var plugin = this;
     content = '<div>'+content+'</div>';
     var $content = $(content);
-    $content.find('math.wysiwyg_mathjax').map(
-      function(i, img) {
-        var $img = $(img);
+    alert("finding div.wm in content=", content);
+    $content.find('div.wysiwyg_mathjax').map(
+      function(i, math) {
+        var $math = $(math);
         // Thats the inlineID we use for extracting the meta data from the database
-        var inlineID = $img.attr('alt');
+        var inlineID = $math.attr('id');
+        alert("Got inlineID of " + inlineID);
         
-        var attributes = plugin.get_inline_attributes($img);
+        var attributes = plugin.get_inline_attributes($math);
+        alert("Got attributes of " + attributes);
         var inlineAttribs = attributes.join(',');
-        $(img, $content).replaceWith('[[wysiwyg_mathjax:'+inlineID+':' + inlineAttribs + ']]');
+        $(math, $content).replaceWith('[[wysiwyg_mathjax:'+inlineID+':' + inlineAttribs + ']]');
       }
     );
     content = $content.html();
     $content.remove();
+    alert("End of Detach, returning content=" + content);
     return content;
   },
 
   get_rendered_wysiwyg_formula: function(iid) {
+      alert("In get_rendered_wysiwyg_formula: function( " +iid);
       var result = '';
       $.ajax( {
         url: Drupal.settings.basePath + 'index.php?q=ajax/wysiwyg_mathjax/render_wysiwyg/' + iid,
@@ -242,10 +248,12 @@ alert("In mathjax update form");
         dataType: 'json'
       }
     );
+    alert("got result from render of: " + result);
     return result;
   },
 
   get_rendered_wysiwyg_formulae: function(iids) {
+   alert("doing the formulae thing with iids=" + iids);
     var result = [];
     $.ajax( {
         url: Drupal.settings.basePath + 'index.php?q=ajax/wysiwyg_mathjax/render_wysiwyg_formulae/' + iids.join(','),

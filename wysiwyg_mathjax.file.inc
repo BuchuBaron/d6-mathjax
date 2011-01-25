@@ -254,9 +254,9 @@ function _wysiwyg_mathjax_create_revision($iid, $vid) {
 function _wysiwyg_mathjax_load_inline_entity($iid) {
   $result = db_query_range('SELECT inl.*,f.*,er.vid FROM {wysiwyg_mathjax_entity} AS inl LEFT JOIN {wysiwyg_mathjax_entity_revision} as er ON inl.iid=er.iid LEFT JOIN {files} AS f ON inl.fid=f.fid WHERE inl.iid=%d', $iid, 0, 1);
   if ($result !== FALSE) {
-    $img_obj = db_fetch_object($result);
-    drupal_alter('wysiwyg_mathjax_entity_load', $img_obj, $iid);
-    return $img_obj;
+    $formula_obj = db_fetch_object($result);
+    drupal_alter('wysiwyg_mathjax_entity_load', $formula_obj, $iid);
+    return $formula_obj;
   }
   // else
   return FALSE;

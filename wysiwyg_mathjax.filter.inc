@@ -3,6 +3,7 @@
  * Implementation of hook_filter().
  */
 function wysiwyg_mathjax_filter($op, $delta = 0, $format = -1, $text = '') {
+rs_debug("Calling function wysiwyg_mathjax_filter($op, $delta = 0, $format = -1, $text = '')");
   switch ($op) {
     case 'list':
       return array(0 => t('Drupal Wiki inline-formulae'));
@@ -29,7 +30,7 @@ function _wysiwyg_mathjax_filter_pattern() {
 }
 
 /**
- * Finds all the occurences of a inline image tag
+ * Finds all the occurences of a inline mathjax formula tag
  */
 function _wysiwyg_mathjax_filter_process(&$body) {
   // Syntax: [[inlineformula:<iid>:<inlineargs>]]

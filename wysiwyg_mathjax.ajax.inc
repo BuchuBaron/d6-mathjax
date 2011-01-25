@@ -52,10 +52,11 @@ function _wysiwyg_mathjax_render_wysiwyg($iid) {
 /**
  * Ajax callback to render formulae for the wysiwyg editor
  */
-function _wysiwyg_mathjax_render_wysiwyg_formula($iids, $revisioned, $form_id) {
+function _wysiwyg_mathjax_render_wysiwyg_formulae($iids, $revisioned, $form_id) {
   $iids = split(',', $iids);
   $output = array();
   foreach ($iids as $iid) {
+    rs_debug("wm.ajax.inc:59: doing iid=$iid");
     // check access rights
     if(_wysiwyg_mathjax_access($iid, 'view') == FALSE) {
       $output[$idd] = 'You dont have the permission to view this formula';
@@ -63,10 +64,12 @@ function _wysiwyg_mathjax_render_wysiwyg_formula($iids, $revisioned, $form_id) {
     }
     // else render the formula
     $formula_obj = _wysiwyg_mathjax_load_inline_entity($iid);
-    $output[$iid] = theme('wysiwyg_mathjax_render_formula_wysiwyg', $formula_obj, array('wysiwyg_placeholder' => '1'));
+    rs_debug("wm.ajax.inc:67: got formula_obj=", $formula_obj);
+    $output[$iid] = theme('wysiwyg_mathjax_render_wysiwyg', $formula_obj, array('wysiwyg_placeholder' => '1'));
   }
 
   $GLOBALS['devel_shutdown'] = FALSE;
+  rs_debug("wm.ajax.inc:72: got output=", $output);
   drupal_set_header('Content-Type: text/javascript; charset=utf-8');
   print _wysiwyg_mathjax_to_js(array('status' => TRUE, 'data' => $output));
   exit();
