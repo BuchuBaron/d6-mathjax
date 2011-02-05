@@ -418,7 +418,7 @@ function theme_wysiwyg_mathjax_render_formula($formula_obj, $arguments) {
 function theme_wysiwyg_mathjax_render_meta($formula_obj, $arguments) {
   $output = '';
   if ($formula_obj->title != '') {
-    $output .= "<span class='formula_title'>{$formula_obj->title}</span>";
+    $output .= "<span class=\"formula_title\">{$formula_obj->title}</span>";
   }
   return $output;
 }
@@ -427,7 +427,7 @@ function theme_wysiwyg_mathjax_render_meta($formula_obj, $arguments) {
  * Renders the meta container of a formula.
  */
 function theme_wysiwyg_mathjax_render_container($formula, $meta, $formula_obj, $arguments) {
-  return "<span class='wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}'>$formula<span class='formula_meta'>$meta</span></span>";
+  return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\">$formula<span class=\"formula_meta\">$meta</span></span>";
 }
 
 /**
@@ -462,7 +462,8 @@ function _wysiwyg_mathjax_get_mathml($formula_obj, $attributes) {
   }
   array_unshift($matharray, '<div class="wysiwyg_mathjax" id="'.$formula_obj->iid.'">');
   array_push($matharray, '</div>');
-  return(join("", $matharray));
+  $retval = join("", $matharray);
+  return($retval);
 }
 
 /**

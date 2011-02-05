@@ -9,7 +9,7 @@ Drupal.wysiwyg.plugins.mathjax = {
   */
   isNode: function (node) {
     $node = this.getRepresentitiveNode(node);
-    return $node.is('div.wysiwyg_mathjax');
+    return $node.is('div');
   },
 
   /* We need this due all the special cases in the editors */
@@ -17,11 +17,12 @@ Drupal.wysiwyg.plugins.mathjax = {
     if (node != null && typeof(node) != 'undefined' && '$' in node) {
       // This case is for the CKeditor, where
       // $(node) != $(node.$)
-      return $(node.$);
+      return $(node.$).parents('div.wysiwyg_mathjax');
     }
     // else
     // This would be for the TinyMCE and hopefully others
-    return $(node);
+    $innerNode = $(node);
+    return $innerNode.parents('div.wysiwyg_mathjax');
   },
 
   /**
@@ -45,9 +46,10 @@ Drupal.wysiwyg.plugins.mathjax = {
         $node = this.getRepresentitiveNode(data.node);
       }
 
-      if ($node != null && $node.is('math') && $node.hasClass('wysiwyg_mathjax')) {
+      if ($node != null && $node.is('div') && $node.hasClass('wysiwyg_mathjax')) {
         $n = $(data.node);
-        options.iid = decodeURIComponent(data.node.getAttribute('alt'));
+      //  options.iid = decodeURIComponent(data.node.getAttribute('alt'));
+        options.iid = $node.attr('id');
         options.action = 'update';
       }
     }
@@ -59,6 +61,7 @@ Drupal.wysiwyg.plugins.mathjax = {
       Drupal.wysiwyg.plugins.mathjax.add_form(data, settings, instanceId);
     }
     else if (options.action == 'update') {
+      // $node.remove();
       Drupal.wysiwyg.plugins.mathjax.update_form(data, settings, instanceId, options);
     }
   },
@@ -143,6 +146,7 @@ Drupal.wysiwyg.plugins.mathjax = {
           }
         }
       );
+      $node.remove();
       Drupal.wysiwyg.plugins.mathjax.createFormulaInContent(iid,instanceId);
       $(this).dialog("close");
     };
@@ -225,6 +229,7 @@ Drupal.wysiwyg.plugins.mathjax = {
     );
     content = $content.html();
     $content.remove();
+   
     return content;
   },
 
