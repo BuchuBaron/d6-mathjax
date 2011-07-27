@@ -93,8 +93,11 @@ function wysiwyg_mathjax_menu() {
  * @brief Implementation of hook_init
  */
 function wysiwyg_mathjax_init() {
-  drupal_add_css(drupal_get_path('module', 'wysiwyg_mathjax') . '/plugins/mathjax/mathjax.css');
-//  drupal_add_js(drupal_get_path('module', 'wysiwyg_mathjax') . '/libraries/MathJax/MathJax.js');
+  if (arg(0)!='admin') {
+    drupal_add_css(drupal_get_path('module', 'wysiwyg_mathjax') . '/plugins/mathjax/mathjax.css');
+//    drupal_add_js('document.write("<script src=\"http:\/\/ajax.googleapis.com\/ajax\/libs\/jquery\/1.4.4\/jquery.min.js\"><\/script>");', 'inline');
+    drupal_add_js('document.write("<script type=\"text/javascript\" src=\"http:\/\/cdn.mathjax.org\/mathjax\/latest\/MathJax.js?config=TeX-AMS-MML_HTMLorMML\"><\/script>\")', 'inline');
+  }
 }
 
 /**
