@@ -93,8 +93,8 @@ function wysiwyg_mathjax_menu() {
  */
 function wysiwyg_mathjax_init() {
   drupal_add_js('misc/jquery.form.js', 'core');
-  if (arg(0)=='node' and arg(2)!='edit') {
-    rs_debug("Adding mathjax because we have arg(0)=".arg(0)." or arg(2)=".arg(2));
+//  if (arg(0)=='node' and arg(2)!='edit') {
+  if (arg(0)=='node') {
     drupal_add_css(drupal_get_path('module', 'wysiwyg_mathjax') . '/plugins/mathjax/mathjax.css');
     drupal_add_js('document.write("<script type=\"text\/javascript\" src=\"http:\/\/cdn.mathjax.org\/mathjax\/latest\/MathJax.js?config=TeX-AMS-MML_HTMLorMML\"><\/script>\"")', 'inline');
   }
@@ -379,6 +379,12 @@ function wysiwyg_mathjax_theme() {
       'arguments' => array(
         'formula_obj',
         'arguments' => array(),
+      ),
+    ),
+    'mathjax_edit_form' => array(
+      'template' => 'wysiwyg-mathjax-edit-form',
+      'arguments' => array(
+        'form',
       ),
     ),
   );

@@ -57,8 +57,8 @@ function wysiwyg_mathjax_upload_form(&$form_state, $parent_build_id) {
     '#type' => 'textarea',
     '#title' => t('MathML Content'),
     '#description' => t('Paste MathML content here that was copied from MathType.  Be sure to configure MathType to paste as MathJax MathML.'),
-    '#cols' => 22,
-    '#rows' => 10,
+    '#cols' => 8,
+    '#rows' => 8,
   );
   $form['file_upload'] = array(
     '#type' => 'fieldset',
@@ -77,7 +77,7 @@ function wysiwyg_mathjax_upload_form(&$form_state, $parent_build_id) {
   $form['file_upload']['wysiwyg_mathjax_file'] = array(
     '#type' => 'file',
     '#title' => t('Select a MathML file to upload'),
-    '#size' => 22,
+    '#size' => 30,
   );
   return $form;
 }
@@ -113,11 +113,10 @@ function wysiwyg_mathjax_upload_form_submit($form, &$form_state) {
  * Called when a formula was uploaded and the details form should be shown.
  */
 function wysiwyg_mathjax_edit_form(&$form_state, $iid, $node_form_build_id, $rebuild_entity = FALSE) {
-  jquery_ui_dialog_child_js(array('width' => 740));
+  jquery_ui_dialog_child_js(array('width' => 640));
   drupal_set_title(t('Formula details'));
 
   $formula_obj = _wysiwyg_mathjax_load_inline_entity($iid);
-  rs_debug("called _wysiwyg_mathjax_load_inline_entity($iid) to get", $formula_obj);
   if ($formula_obj == FALSE) {
     drupal_set_message(t('Could not find formula in the database'), 'warning');
     return array();
@@ -135,13 +134,12 @@ function wysiwyg_mathjax_edit_form(&$form_state, $iid, $node_form_build_id, $reb
 
   // Create the formula detail form.
   $form['#cache'] = TRUE;
+//  $form['#theme'] = 'mathjax_edit_form';
+// The theme template does not seem to work so the markup has been added to the form
   $form['#attributes'] = array(
     'enctype' => "multipart/form-data",
   );
-  // Render the formula for the preview in the form. (yeah right!)
-  $formula = theme('imagecache', 'wysiwyg_mathjax_preview', $defaults['filepath'], $iid, $defaults['title'], $attributes, TRUE, FALSE);
   // Load the details form.
-  rs_debug("146: formula=", $formula);
   $form += _wysiwyg_mathjax_details_form($formula_obj, $iid, $defaults);
   $form['rebuild_iid'] = array(
     '#type' => 'value',
@@ -179,7 +177,6 @@ function wysiwyg_mathjax_edit_form_validate($form, &$state) {
  * Adds the details into the database for the inline-id
  */
 function wysiwyg_mathjax_edit_form_submit($form, &$state) {
-  rs_debug("183: state=", $state);
   // Save mathml file contents
   $fileobj = _wysiwyg_mathjax_load_inline_entity($state['values']['iid']);
   $fileobj = _wysiwyg_mathjax_save_file($state['values']['wysiwyg_mathml_text'], $fileobj);
@@ -211,30 +208,35 @@ function _wysiwyg_mathjax_details_form($formula_obj, $iid, $defaults = array()) 
   $formula_text = _wysiwyg_mathjax_get_raw_mathml($formula_obj, NULL);
   $form = array();
 
-  $form['formula_upload_details'] = array(
+  $form['formula_edit_details'] = array(
     '#type' => 'fieldset',
     '#title' => t('Formula details'),
     '#prefix' => '<div id="formula_details">',
     '#suffix' => '</div>'
   );
-  // Title
-  $form['formula_upload_details']['title'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Title'),
-    '#default_value' => $defaults['title'],
-    '#size' => 50
-  );
-  $form['formula_upload_details']['wysiwyg_mathml_text'] = array(
+
+  $form['formula_edit_details']['wysiwyg_mathml_text'] = array(
     '#type' => 'textarea',
     '#title' => t('MathML Content'),
     '#description' => t('You can replace this raw MathML with an updated version, preferably copied from MathType with configuration set to paste as MathJax MathType'),
-    '#cols' => 22,
-    '#rows' => 10,
+    '#cols' => 8,
+    '#rows' => 8,
     '#default_value' => $formula_text,
+    '#prefix' => '<table border="0"><tr><td width="50%">',
+    '#suffix' => '</td><td>',
   );
+
+  // Title
+  $form['formula_edit_details']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#default_value' => $defaults['title'],
+    '#size' => 30,
+  );
+
   // Alignment / Floating
   $m = drupal_get_path('module','wysiwyg_mathjax');
-  $form['formula_upload_details']['alignment'] = array(
+  $form['formula_edit_details']['alignment'] = array(
     '#type' => 'select',
     '#title' => t('Formula alignment'),
     '#options' => array(
@@ -250,7 +252,7 @@ function _wysiwyg_mathjax_details_form($formula_obj, $iid, $defaults = array()) 
   );
 
   // We group all those extras into this fieldset to hide them from the general UI.
-  $form['formula_upload_details']['extras'] = array(
+  $form['formula_edit_details']['extras'] = array(
     '#type' => 'fieldset',
     '#title' => t('Extras'),
     '#collapsed' => TRUE,
@@ -261,7 +263,7 @@ function _wysiwyg_mathjax_details_form($formula_obj, $iid, $defaults = array()) 
   $styles = _wysiwyg_mathjax_get_formula_styles();
   if (count($styles) > 0) {
     array_unshift($styles, t('None'));
-    $form['formula_upload_details']['extras']['style'] = array(
+    $form['formula_edit_details']['extras']['style'] = array(
       '#type' => 'select',
       '#title' => t('Style'),
       '#options' => $styles,
@@ -270,27 +272,27 @@ function _wysiwyg_mathjax_details_form($formula_obj, $iid, $defaults = array()) 
   }
 
   // this is the container for our preview-image
-  $form['formula_upload_details']['preview'] = array(
+  $form['formula_edit_details']['preview'] = array(
     '#type' => 'fieldset',
     '#title' => t('Preview'),
     '#attributes' => array('id' => 'formula_preview'),
     '#collapsible' => false
   );
-  $form['formula_upload_details']['preview'] ['uploadedFormula'] = array(
+  $form['formula_edit_details']['preview'] ['uploadedFormula'] = array(
     '#prefix' => '<div >',
-    '#suffix' => '</div>',
-    '#value' => $formula,
+    '#suffix' => '</div></td></tr></table>',
+    '#value' => theme('wysiwyg_mathjax_render_formula_entity', $formula_obj, null),
   );
 
   // This is a fake submit button, thats why "access false" is used.
   // This is because we use an ajax form submit.
-  $form['formula_upload_details']['buttons']['submitformuladetails'] = array(
+  $form['formula_edit_details']['buttons']['submitformuladetails'] = array(
     '#type' => 'submit',
     '#value' => 'JSinsert', // t() not needed here, see comment below.
     '#access' => FALSE,
   );
 
-  $form['formula_upload_details']['iid'] = array(
+  $form['formula_edit_details']['iid'] = array(
     '#type' => 'value',
     '#value' => $iid,
     '#default_value' => $iid

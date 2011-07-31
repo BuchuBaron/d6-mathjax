@@ -67,7 +67,6 @@ function _wysiwyg_mathjax_save_file($formula_text, $file=NULL) {
       return NULL;
     }
     $filepath = file_create_filename('mlf.mml', $dest);
-    rs_debug("got filepath=$filepath");
 
     $fileparts = explode('/', $filepath);
     $filename = $fileparts[count($fileparts)-1];
@@ -82,7 +81,6 @@ function _wysiwyg_mathjax_save_file($formula_text, $file=NULL) {
     $file->status = 1;
     $file->timestamp = time();
     drupal_write_record('files', $file);
-    rs_debug("File data so far=", $file);
   }
   if (user_access('save MathML file') && $filepath = file_save_data($formula_text, $file->filepath, FILE_EXISTS_REPLACE)) {
 

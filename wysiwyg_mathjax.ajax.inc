@@ -5,9 +5,7 @@
  */
 function _wysiwyg_mathjax_entity_upload($node_form_build_id) {
   // Load the cache which includes the currently already uploaded files.
-  rs_debug("node_form_build_id=$node_form_build_id");
   $cached_files = cache_get('wysiwyg_mathjax_' . $node_form_build_id);
-  rs_debug("cached files=", $cached_files);
 
   // Yet no file, initialize the array.
   if (empty($cached_files)) {
@@ -19,7 +17,6 @@ function _wysiwyg_mathjax_entity_upload($node_form_build_id) {
   // Handle new uploads. Create the files in the files table and make them temporary.
   // They will need to be made persistent on form submit in the hook_comment or hook_nodeapi
   $formula_details = _wysiwyg_mathjax_upload_file();
-  rs_debug("formula_details=", $formula_details);
   if ($formula_details->filepath != '') {
     $options = array();
     if (variable_get('wysiwyg_mathjax_filename_as_title_default', FALSE)) {
@@ -27,7 +24,6 @@ function _wysiwyg_mathjax_entity_upload($node_form_build_id) {
     }
     // save the fid as used inline and generate a iid (inline id)
     $iid = _wysiwyg_mathjax_create_inline_entity($formula_details, TRUE, $options);
-    rs_debug("got iid=", $iid);
     // we store the iid in the file object, so we can use it on submit of the node form
     // to update the inline-entry to be static and not temporary
     $formula_details->iid = $iid;
