@@ -77,8 +77,16 @@ Drupal.wysiwyg.plugins.mathjax = {
       // well lets test if an image has been selected
       var form = $(dialogIframe).contents().find('form#wysiwyg-mathjax-edit-form').size();
       if (form == 0) {
-        alert(Drupal.t("Please select a formula to upload first"));
-        return;
+      // we clicked 'Insert' on the first screen, which means either we did not
+      // select a file (which immediately goes to the edit form), or we did or
+      // did not paste MathML into the text box
+        var uploadform = $(dialogIframe).contents().find('form#wysiwyg-mathjax-upload-form');
+        var mytext = $(uploadform).find('#edit-wysiwyg-mathml-text');
+        if ($(mytext).val().length == 0) {
+          alert(Drupal.t("Please first select a formula to upload, or paste your MathML content into the text box."));
+          return;
+        }
+        $(uploadform).submit();
       }
       // else
       var iid = 0;

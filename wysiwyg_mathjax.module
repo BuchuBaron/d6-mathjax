@@ -1,5 +1,4 @@
 <?php
-
 require_once('wysiwyg_mathjax.file.inc');
 require_once('wysiwyg_mathjax.form.inc');
 require_once('wysiwyg_mathjax.ajax.inc');
@@ -93,10 +92,11 @@ function wysiwyg_mathjax_menu() {
  * @brief Implementation of hook_init
  */
 function wysiwyg_mathjax_init() {
-  if (arg(0)!='admin') {
+  drupal_add_js('misc/jquery.form.js', 'core');
+  if (arg(0)=='node' and arg(2)!='edit') {
+    rs_debug("Adding mathjax because we have arg(0)=".arg(0)." or arg(2)=".arg(2));
     drupal_add_css(drupal_get_path('module', 'wysiwyg_mathjax') . '/plugins/mathjax/mathjax.css');
-//    drupal_add_js('document.write("<script src=\"http:\/\/ajax.googleapis.com\/ajax\/libs\/jquery\/1.4.4\/jquery.min.js\"><\/script>");', 'inline');
-    drupal_add_js('document.write("<script type=\"text/javascript\" src=\"http:\/\/cdn.mathjax.org\/mathjax\/latest\/MathJax.js?config=TeX-AMS-MML_HTMLorMML\"><\/script>\")', 'inline');
+    drupal_add_js('document.write("<script type=\"text\/javascript\" src=\"http:\/\/cdn.mathjax.org\/mathjax\/latest\/MathJax.js?config=TeX-AMS-MML_HTMLorMML\"><\/script>\"")', 'inline');
   }
 }
 
@@ -209,7 +209,11 @@ function _wysiwyg_mathjax_access($iid, $op) {
  * Implementation of hook_perm().
  */
 function wysiwyg_mathjax_perm() {
-  return array('upload MathML file');
+  return array(
+    'upload MathML file',
+    'create MathML file',
+    'edit MathML file',
+  );
 }
 
 /**
@@ -448,6 +452,11 @@ function theme_wysiwyg_mathjax_render_wysiwyg($formula_obj, $arguments = array()
 }
 
 function _wysiwyg_mathjax_get_mathml($formula_obj, $attributes) {
+  $mathml = _wysiwyg_mathjax_get_raw_mathml($formula_obj, $attributes);
+  return('<div class="wysiwyg_mathjax" id="'.$formula_obj->iid."\">\n".$mathml."\n</div>");
+}
+
+function _wysiwyg_mathjax_get_raw_mathml($formula_obj, $attributes) {
 
   $matharray = file($formula_obj->filepath);
 
@@ -459,13 +468,14 @@ function _wysiwyg_mathjax_get_mathml($formula_obj, $attributes) {
     elseif (stristr($value, 'annotation') !== false) {
       unset($matharray[$key]);
     }
-//    elseif (stristr($value, '<math') !== false) {
-//      $matharray[$key] = preg_replace('/<math/i', '<math class="wysiwyg_mathjax" ', $value);
-//    }
+    elseif (strlen(trim($value)) == '') {
+      unset($matharray[$key]);
+    }
+    else {
+      $matharray[$key] = preg_replace('/[\s\r\n]*$/', '', $value);
+    }
   }
-  array_unshift($matharray, '<div class="wysiwyg_mathjax" id="'.$formula_obj->iid.'">');
-  array_push($matharray, '</div>');
-  $retval = join("", $matharray);
+  $retval = join("\r", $matharray);
   return($retval);
 }
 

@@ -47,6 +47,70 @@ function _wysiwyg_mathjax_upload_file() {
 }
 
 /**
+ * Saving a MathML formula to a given or new file and calling the file_insert hooks.
+ * @return: Returns the uploaded file as an object
+ */
+function _wysiwyg_mathjax_save_file($formula_text, $file=NULL) {
+  global $user;
+  if ($file==NULL) {
+    if (!user_access('create MathML file')) {
+      drupal_goto(drupal_access_denied());
+    }
+    $dest = _wysiwyg_mathjax_get_dest_dir();
+    // create the path if not existent
+    if (!file_check_directory($dest)) {
+      mkdir($dest, 0777, TRUE);
+    }
+
+    if (!file_check_directory($dest, FILE_CREATE_DIRECTORY)) {
+      drupal_set_message('Destination path is not writeable, cannot save', 'error');
+      return NULL;
+    }
+    $filepath = file_create_filename('mlf.mml', $dest);
+    rs_debug("got filepath=$filepath");
+
+    $fileparts = explode('/', $filepath);
+    $filename = $fileparts[count($fileparts)-1];
+    $file = (object)$file;
+    $file->filename = $filename;
+    $file->filepath = $filepath;
+    $file->filemime = 'text/mathml';
+    $file->source = 'wysiwyg_mathjax_file';
+    $file->destination = $filepath;
+    $file->filesize = strlen($formula_text);
+    $file->uid = $user->uid;
+    $file->status = 1;
+    $file->timestamp = time();
+    drupal_write_record('files', $file);
+    rs_debug("File data so far=", $file);
+  }
+  if (user_access('save MathML file') && $filepath = file_save_data($formula_text, $file->filepath, FILE_EXISTS_REPLACE)) {
+
+    foreach (module_implements('wysiwyg_mathjax_file_saved') as $module) {
+      $function =  $module .'_wysiwyg_mathjax_file_saved';
+      $function($file);
+    }
+
+/*
+    $file->list = 0;  // do not list the files
+    $file->description = $file->filename;
+    $file->weight = 0;
+    $file->new = TRUE;
+*/
+    if (!@chmod($file->filepath, 0664)) {
+      watchdog('wysiwyg_mathjax', 'Could not set permissons on destination file: %file', array('%file' => $file->filepath));
+    }
+  }
+  else {
+    // Save failed.
+    return NULL;
+  }
+
+  drupal_alter('wysiwyg_mathjax_file_saved', $file);
+  return (object) $file;
+}
+
+/**
  * Get the dest dir by parsing the settings and calling other modules
  *
  */
@@ -99,7 +163,7 @@ function _wysiwyg_mathjax_commment_load($cid) {
 
 /**
  * Share from the upload.module
- * Adds, removes or updates files in the image property.
+ * Adds, removes or updates files
  * This is actually the place where a file object get attached to a node, the
  * relation is saved in the wysiwyg_mathjax table
  */
@@ -140,7 +204,7 @@ function _wysiwyg_mathjax_save_files(&$entity, $value) {
     return;
   }
   
-  for($i=0; $i<count($matches[0]); $i++) {
+  for ($i=0; $i<count($matches[0]); $i++) {
     $iid =$matches[1][$i];
     // remove the widget from the array as all the restovers will be deleted then
     $files[$iid] = _wysiwyg_mathjax_load_inline_entity($iid);

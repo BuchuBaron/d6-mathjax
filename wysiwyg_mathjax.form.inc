@@ -45,11 +45,28 @@ function wysiwyg_mathjax_upload_form(&$form_state, $parent_build_id) {
 
   $form = array();
   $form['#attributes'] = array('enctype' => "multipart/form-data");
+  $form['mathml_paste'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Paste MathML content'),
+    '#prefix' => '<div id="mathml_paste_group">',
+    '#suffix' => '</div>'
+//    '#collapsible' => TRUE,
+//    '#collapsed' => FALSE,
+  );
+  $form['mathml_paste']['wysiwyg_mathml_text'] = array(
+    '#type' => 'textarea',
+    '#title' => t('MathML Content'),
+    '#description' => t('Paste MathML content here that was copied from MathType.  Be sure to configure MathType to paste as MathJax MathML.'),
+    '#cols' => 22,
+    '#rows' => 10,
+  );
   $form['file_upload'] = array(
     '#type' => 'fieldset',
     '#title' => t('Upload MathML file'),
     '#prefix' => '<div id="file_upload_group">',
     '#suffix' => '</div>'
+//    '#collapsible' => TRUE,
+//    '#collapsed' => TRUE,
   );
 
   $form['parent_build_id'] = array(
@@ -66,16 +83,26 @@ function wysiwyg_mathjax_upload_form(&$form_state, $parent_build_id) {
 }
 
 function wysiwyg_mathjax_upload_form_validate(&$form, &$state) {
-  $iid = _wysiwyg_mathjax_entity_upload($state['values']['parent_build_id']);
+  if (strlen(trim($state['values']['wysiwyg_mathml_text'])) > 0) {
+    $fileobj = _wysiwyg_mathjax_save_file($state['values']['wysiwyg_mathml_text']);
+    $options = array(
+      'title' => check_plain($fileobj->filename),
+    );
+    $iid = _wysiwyg_mathjax_create_inline_entity($fileobj, TRUE, $options);
+  }
+  else { // upload the file
+    $iid = _wysiwyg_mathjax_entity_upload($state['values']['parent_build_id']);
+  }
+
   if ($iid == FALSE) {
-    form_set_error('wysiwyg_mathjax_file', t('This file could not be uploaded'));
+    form_set_error('wysiwyg_mathjax_file', t('This file could not be uploaded or saved'));
     return;
   }
   
-  // If the upload was fine, redirect to the details form
+  // If the upload or save was fine, redirect to the details form
   $state['submitted'] = TRUE;
   $state['values']['iid'] = $iid;
-  $state['values']['redirect'] = 'wysiwyg_mathjax/edit/' . $iid .'/' . $state['values']['parent_build_id'] . '?XDEBUG_SESSION_START=1';
+  $state['values']['redirect'] = 'wysiwyg_mathjax/edit/' . $iid .'/' . $state['values']['parent_build_id'];
 }
 
 function wysiwyg_mathjax_upload_form_submit($form, &$form_state) {
@@ -90,6 +117,7 @@ function wysiwyg_mathjax_edit_form(&$form_state, $iid, $node_form_build_id, $reb
   drupal_set_title(t('Formula details'));
 
   $formula_obj = _wysiwyg_mathjax_load_inline_entity($iid);
+  rs_debug("called _wysiwyg_mathjax_load_inline_entity($iid) to get", $formula_obj);
   if ($formula_obj == FALSE) {
     drupal_set_message(t('Could not find formula in the database'), 'warning');
     return array();
@@ -113,7 +141,8 @@ function wysiwyg_mathjax_edit_form(&$form_state, $iid, $node_form_build_id, $reb
   // Render the formula for the preview in the form. (yeah right!)
   $formula = theme('imagecache', 'wysiwyg_mathjax_preview', $defaults['filepath'], $iid, $defaults['title'], $attributes, TRUE, FALSE);
   // Load the details form.
-  $form += _wysiwyg_mathjax_details_form($formula, $iid, $defaults);
+  rs_debug("146: formula=", $formula);
+  $form += _wysiwyg_mathjax_details_form($formula_obj, $iid, $defaults);
   $form['rebuild_iid'] = array(
     '#type' => 'value',
     '#value' => FALSE,
@@ -150,6 +179,11 @@ function wysiwyg_mathjax_edit_form_validate($form, &$state) {
  * Adds the details into the database for the inline-id
  */
 function wysiwyg_mathjax_edit_form_submit($form, &$state) {
+  rs_debug("183: state=", $state);
+  // Save mathml file contents
+  $fileobj = _wysiwyg_mathjax_load_inline_entity($state['values']['iid']);
+  $fileobj = _wysiwyg_mathjax_save_file($state['values']['wysiwyg_mathml_text'], $fileobj);
+  
   $update = array(
     'iid',
   );
@@ -173,7 +207,8 @@ function wysiwyg_mathjax_edit_form_submit($form, &$state) {
  * Return the form to be presented as image details form.
  * Title, floating description and so forth
  */
-function _wysiwyg_mathjax_details_form($formula, $iid, $defaults = array()) {
+function _wysiwyg_mathjax_details_form($formula_obj, $iid, $defaults = array()) {
+  $formula_text = _wysiwyg_mathjax_get_raw_mathml($formula_obj, NULL);
   $form = array();
 
   $form['formula_upload_details'] = array(
@@ -188,6 +223,14 @@ function _wysiwyg_mathjax_details_form($formula, $iid, $defaults = array()) {
     '#title' => t('Title'),
     '#default_value' => $defaults['title'],
     '#size' => 50
+  );
+  $form['formula_upload_details']['wysiwyg_mathml_text'] = array(
+    '#type' => 'textarea',
+    '#title' => t('MathML Content'),
+    '#description' => t('You can replace this raw MathML with an updated version, preferably copied from MathType with configuration set to paste as MathJax MathType'),
+    '#cols' => 22,
+    '#rows' => 10,
+    '#default_value' => $formula_text,
   );
   // Alignment / Floating
   $m = drupal_get_path('module','wysiwyg_mathjax');
