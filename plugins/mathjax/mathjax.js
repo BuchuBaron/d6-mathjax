@@ -74,23 +74,24 @@ Drupal.wysiwyg.plugins.mathjax = {
     var dialogIframe = Drupal.jqui_dialog.iframeSelector();
     var btns = {};
     btns[Drupal.t('Insert')] = function () {
-      // well lets test if an image has been selected
-      var form = $(dialogIframe).contents().find('form#wysiwyg-mathjax-edit-form').size();
+      // well lets test if a formula has been selected
+      var formname = 'form#wysiwyg-mathjax-edit-form';
+      var form = $(dialogIframe).contents().find(formname).size();
       if (form == 0) {
       // we clicked 'Insert' on the first screen, which means either we did not
       // select a file (which immediately goes to the edit form), or we did or
       // did not paste MathML into the text box
-        var uploadform = $(dialogIframe).contents().find('form#wysiwyg-mathjax-upload-form');
+        formname = 'form#wysiwyg-mathjax-edit-form';
+        var uploadform = $(dialogIframe).contents().find(formname);
         var mytext = $(uploadform).find('#edit-wysiwyg-mathml-text');
         if ($(mytext).val().length == 0) {
           alert(Drupal.t("Please first select a formula to upload, or paste your MathML content into the text box."));
           return;
         }
-        $(uploadform).submit();
       }
       // else
       var iid = 0;
-      var form = $(dialogIframe).contents().find('form#wysiwyg-mathjax-edit-form');
+      var form = $(dialogIframe).contents().find(formname);
       form.ajaxSubmit({
         dataType : 'json',
         method: 'post',
