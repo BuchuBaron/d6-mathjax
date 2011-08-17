@@ -121,7 +121,6 @@ function wysiwyg_mathjax_edit_form(&$form_state, $iid, $node_form_build_id, $reb
     drupal_set_message(t('Could not find formula in the database'), 'warning');
     return array();
   }
-
   $defaults = array(
     'filepath' => $formula_obj->filepath,
     'alignment' => $formula_obj->alignment,

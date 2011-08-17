@@ -76,18 +76,18 @@ Drupal.wysiwyg.plugins.mathjax = {
     btns[Drupal.t('Insert')] = function () {
       // well lets test if a formula has been selected
       var formname = 'form#wysiwyg-mathjax-edit-form';
-      var form = $(dialogIframe).contents().find(formname).size();
-      if (form == 0) {
+      var formsize = $(dialogIframe).contents().find(formname).size();
+      if (formsize == 0) {
       // we clicked 'Insert' on the first screen, which means either we did not
       // select a file (which immediately goes to the edit form), or we did or
       // did not paste MathML into the text box
-        formname = 'form#wysiwyg-mathjax-edit-form';
-        var uploadform = $(dialogIframe).contents().find(formname);
-        var mytext = $(uploadform).find('#edit-wysiwyg-mathml-text');
-        if ($(mytext).val().length == 0) {
+        var mytext = $(dialogIframe).contents().find('#edit-wysiwyg-mathml-text');
+        if ($(mytext).val() == undefined || $(mytext).val().length == 0) {
           alert(Drupal.t("Please first select a formula to upload, or paste your MathML content into the text box."));
           return;
         }
+        $('form#wysiwyg-mathjax-upload-form').submit(); // we were on the first form
+        return;
       }
       // else
       var iid = 0;
