@@ -26,7 +26,7 @@ function wysiwyg_mathjax_menu() {
   $items['wysiwyg_mathjax/upload/%'] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('wysiwyg_mathjax_upload_form', 2),
-    'access callback' => 'user_access',
+//    'access callback' => 'user_access',
     'access arguments' => array('upload MathML file'),
     'type' => MENU_CALLBACK,
   );
@@ -34,16 +34,14 @@ function wysiwyg_mathjax_menu() {
   $items['ajax/wysiwyg_mathjax/render_wysiwyg/%'] = array(
     'page callback' => '_wysiwyg_mathjax_render_wysiwyg',
     'page arguments' => array(3),
-    'access callback' => '_wysiwyg_mathjax_access',
-    'access arguments' => array( 3, 'view'),
+    'access arguments' => array('view MathML file'),
     'type' => MENU_CALLBACK,
   );
   // return multiple rendered formulae
   $items['ajax/wysiwyg_mathjax/render_wysiwyg_formulae/%'] = array(
     'page callback' => '_wysiwyg_mathjax_render_wysiwyg_formulae',
     'page arguments' => array(3, 4, 5),
-    'access callback' => 'user_access',
-    'access arguments' => array('upload MathML file'),
+    'access arguments' => array('view MathML file'),
     'type' => MENU_CALLBACK,
   );
   // Form for editing a formula
@@ -60,8 +58,9 @@ function wysiwyg_mathjax_menu() {
     // wysiwyg_mathjax_edit_form($form_state,12,foo,bar,cat,dog,12,foo,bar,cat,dog)
     // what is not exepected and especially bad if you have optional parameters (which will get overridden then)
     'page arguments' => array('wysiwyg_mathjax_edit_form', 2),
-    'access callback' => '_wysiwyg_mathjax_access',
-    'access arguments' => array(2,'update'),
+//    'access callback' => '_wysiwyg_mathjax_access',
+//    'access arguments' => array(2,'update'),
+    'access arguments' => array('edit MathML file'),
     'type' => MENU_CALLBACK,
   );
 
@@ -69,8 +68,9 @@ function wysiwyg_mathjax_menu() {
   $items['wysiwyg_mathjax/reuse/%'] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('wysiwyg_mathjax_edit_form', 2, 3, TRUE),
-    'access callback' => '_wysiwyg_mathjax_access',
-    'access arguments' => array(2,'view'),
+//    'access callback' => '_wysiwyg_mathjax_access',
+//    'access arguments' => array(2,'view'),
+    'access arguments' => array('edit MathML file'),
     'type' => MENU_CALLBACK,
   );
 
@@ -126,6 +126,7 @@ function wysiwyg_mathjax_wysiwyg_include_directory($type) {
  */
 
 function _wysiwyg_mathjax_access($iid, $op) {
+  rs_debug("calling function _wysiwyg_mathjax_access($iid, $op)");
   global $user;
   if($user->uid == 1 || user_access('administer nodes')) {
     return TRUE;
@@ -136,6 +137,7 @@ function _wysiwyg_mathjax_access($iid, $op) {
   // Get the relation type
   $relation = 'unknown';
   $parent = NULL;
+rs_debug("e=", $e);
   if($e->cid != 0) {
     $parent = _comment_load($e->cid);    
     // if op is view, use the node relation
@@ -213,6 +215,7 @@ function wysiwyg_mathjax_perm() {
     'upload MathML file',
     'create MathML file',
     'edit MathML file',
+    'view MathML file',
   );
 }
 

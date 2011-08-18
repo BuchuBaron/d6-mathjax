@@ -82,7 +82,7 @@ function _wysiwyg_mathjax_save_file($formula_text, $file=NULL) {
     $file->timestamp = time();
     drupal_write_record('files', $file);
   }
-  if (user_access('save MathML file') && $filepath = file_save_data($formula_text, $file->filepath, FILE_EXISTS_REPLACE)) {
+  if (user_access('edit MathML file') && $filepath = file_save_data($formula_text, $file->filepath, FILE_EXISTS_REPLACE)) {
 
     foreach (module_implements('wysiwyg_mathjax_file_saved') as $module) {
       $function =  $module .'_wysiwyg_mathjax_file_saved';
