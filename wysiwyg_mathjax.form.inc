@@ -246,7 +246,7 @@ function _wysiwyg_mathjax_details_form($formula_obj, $iid, $defaults = array()) 
       'mathjax_floating_none_right' => theme('image',"$m/images/none_right_float.png", $t = t('Formula is inline with the text (right)'), $t),
       'mathjax_floating_right' => theme('image',"$m/images/right_float.png", $t = t('Image on right, text on left'), $t),      
     ),
-    '#default_value' => $defaults['alignment'],
+    '#default_value' => $defaults['alignment'] ? $defaults['alignment'] : 'mathjax_floating_none',
     '#after_build' => array('drupalwiki_imageselect_element_register'),
   );
 
