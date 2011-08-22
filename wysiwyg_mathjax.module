@@ -126,7 +126,6 @@ function wysiwyg_mathjax_wysiwyg_include_directory($type) {
  */
 
 function _wysiwyg_mathjax_access($iid, $op) {
-  rs_debug("calling function _wysiwyg_mathjax_access($iid, $op)");
   global $user;
   if($user->uid == 1 || user_access('administer nodes')) {
     return TRUE;
