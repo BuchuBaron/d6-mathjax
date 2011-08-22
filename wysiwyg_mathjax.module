@@ -136,7 +136,6 @@ function _wysiwyg_mathjax_access($iid, $op) {
   // Get the relation type
   $relation = 'unknown';
   $parent = NULL;
-rs_debug("e=", $e);
   if($e->cid != 0) {
     $parent = _comment_load($e->cid);    
     // if op is view, use the node relation
