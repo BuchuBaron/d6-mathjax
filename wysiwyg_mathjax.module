@@ -468,7 +468,7 @@ function theme_wysiwyg_mathjax_render_wysiwyg($formula_obj, $arguments = array()
 
 function _wysiwyg_mathjax_get_mathml($formula_obj, $attributes) {
   $mathml = _wysiwyg_mathjax_get_raw_mathml($formula_obj, $attributes);
-  return('<div class="wysiwyg_mathjax" id="'.$formula_obj->iid."\">\n".$mathml."\n</div>");
+  return('<div class="wysiwyg_mathjax" id="'.$formula_obj->iid."\">".$mathml."</div>");
 }
 
 function _wysiwyg_mathjax_get_raw_mathml($formula_obj, $attributes) {
