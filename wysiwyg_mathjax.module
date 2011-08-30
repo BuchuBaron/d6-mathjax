@@ -441,7 +441,15 @@ function theme_wysiwyg_mathjax_render_meta($formula_obj, $arguments) {
  * Renders the meta container of a formula.
  */
 function theme_wysiwyg_mathjax_render_container($formula, $meta, $formula_obj, $arguments) {
-  return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\">$formula<span class=\"formula_meta\">$meta</span></span>";
+  if ($formula_obj->alignment == 'mathjax_centered_label_right') {
+    return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\">$formula<span class=\"formula_meta {$formula_obj->alignment}\">$meta</span></span><br clear=\"both\">";
+  }
+  elseif ($formula_obj->alignment == 'mathjax_inline') {
+    return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\">$formula</span>";
+  }
+  else {
+    return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\">$formula<span class=\"formula_meta\">$meta</span></span>";
+  }
 }
 
 /**

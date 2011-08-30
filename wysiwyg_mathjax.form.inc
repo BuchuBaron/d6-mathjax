@@ -239,10 +239,11 @@ function _wysiwyg_mathjax_details_form($formula_obj, $iid, $defaults = array()) 
     '#type' => 'select',
     '#title' => t('Formula alignment'),
     '#options' => array(
-//TODO Not working yet      'mathjax_inline' => theme('image',"$m/images/inline.png", $t = t('Formula flows inline with the text'), $t),
+      'mathjax_inline' => theme('image',"$m/images/inline.png", $t = t('Formula flows inline with the text'), $t),
       'mathjax_floating_left' => theme('image',"$m/images/left_float.png", $t = t('Formula on left, text on right'), $t),
       'mathjax_floating_none_left' => theme('image',"$m/images/none_left_float.png", $t = t('Formula is inline with the text (left)'), $t),
       'mathjax_floating_none' => theme('image',"$m/images/none_float.png", $t = t('Formula is inline with the text (none)'), $t),
+      'mathjax_centered_label_right' => theme('image',"$m/images/label_right.png", $t = t('Formula is left-indented with the label on the right'), $t),
       'mathjax_floating_none_right' => theme('image',"$m/images/none_right_float.png", $t = t('Formula is inline with the text (right)'), $t),
       'mathjax_floating_right' => theme('image',"$m/images/right_float.png", $t = t('Image on right, text on left'), $t),      
     ),

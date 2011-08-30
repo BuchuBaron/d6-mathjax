@@ -68,29 +68,48 @@ img.mathjax_styles_black_border, div.mathjax_styles_black_border
   margin:0px;
 }
 
-div.mathjax_styles_spacing_20_black_border .image_title, div.mathjax_styles_black_border .image_title {
+div.mathjax_styles_spacing_20_black_border .formula_title, div.mathjax_styles_black_border .formula_title {
    margin:1px 0px 2px 2px;
    text-decoration:none;
 }
 
-.image_title {
-   text-decoration:underline;
-   color: #CCCCCC;
+.formula_title {
+   color: #AAA;
 }
 
-#image_preview {
-  float:right;
+#formula_preview {
+  float:none;
 }
 
-#image_details {
+#formula_details {
   float:left;
 }
 
-.image_meta {
+.formula_meta {
   display:block;
 }
+.wysiwyg_mathjax.formula.mathjax_centered_label_right {
+  display: block;
+}
+.wysiwyg_mathjax.formula.mathjax_centered_label_right div.MathJax_MathML math {
+  width: 90%;
+  float: left;
+}
+.wysiwyg_mathjax.formula.mathjax_centered_label_right div {
+  height: 5px;
+  clear: both;
+}
+.formula_meta.mathjax_centered_label_right {
+  float: right;
+}
+.wysiwyg_mathjax.formula.mathjax_inline div,
+.wysiwyg_mathjax.formula.mathjax_inline div.MathJax_MathML math {
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
 
-#image_details_form {
+#formula_details_form {
   width:300px;
 }
 
