@@ -97,6 +97,7 @@ function wysiwyg_mathjax_init() {
   if (arg(0)=='node') {
     drupal_add_css(drupal_get_path('module', 'wysiwyg_mathjax') . '/plugins/mathjax/mathjax.css');
     drupal_add_js('document.write("<script type=\"text\/javascript\" src=\"http:\/\/cdn.mathjax.org\/mathjax\/latest\/MathJax.js?config=TeX-AMS-MML_HTMLorMML\"><\/script>\"")', 'inline');
+    drupal_add_js(drupal_get_path('module', 'wysiwyg_mathjax') . '/js/wysiwyg_mathjax_inline.js');
   }
 }
 
@@ -445,7 +446,6 @@ function theme_wysiwyg_mathjax_render_container($formula, $meta, $formula_obj, $
     return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\">$formula<span class=\"formula_meta {$formula_obj->alignment}\">$meta</span></span><br clear=\"both\">";
   }
   elseif ($formula_obj->alignment == 'mathjax_inline') {
-    drupal_add_js(drupal_get_path('module', 'wysiwyg_mathjax') . '/js/wysiwyg_mathjax_inline.js');
     return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\">$formula</span>";
   }
   else {
