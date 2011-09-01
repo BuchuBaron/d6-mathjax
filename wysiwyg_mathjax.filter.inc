@@ -25,7 +25,7 @@ function wysiwyg_mathjax_filter($op, $delta = 0, $format = -1, $text = '') {
 }
 
 function _wysiwyg_mathjax_filter_pattern() {
-  return '/<\/p>\[\[wysiwyg_mathjax:(\d+):([^\]]*?)\]\]<p>/e';
+  return '/\[\[wysiwyg_mathjax:(\d+):([^\]]*?)\]\]/e';
 }
 
 /**

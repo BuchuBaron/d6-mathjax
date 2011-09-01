@@ -445,6 +445,7 @@ function theme_wysiwyg_mathjax_render_container($formula, $meta, $formula_obj, $
     return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\">$formula<span class=\"formula_meta {$formula_obj->alignment}\">$meta</span></span><br clear=\"both\">";
   }
   elseif ($formula_obj->alignment == 'mathjax_inline') {
+    drupal_add_js(drupal_get_path('module', 'wysiwyg_mathjax') . '/js/wysiwyg_mathjax_inline.js');
     return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\">$formula</span>";
   }
   else {
