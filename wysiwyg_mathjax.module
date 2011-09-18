@@ -449,7 +449,7 @@ function theme_wysiwyg_mathjax_render_container($formula, $meta, $formula_obj, $
     return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\">$formula</span>";
   }
   else {
-    return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\">$formula<span class=\"formula_meta\">$meta</span></span>";
+    return "<span class=\"wysiwyg_mathjax formula {$formula_obj->alignment} {$formula_obj->style}\"><span class=\"formula_meta\">$meta</span>$formula</span>";
   }
 }
 
