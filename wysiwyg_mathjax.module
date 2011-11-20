@@ -96,60 +96,6 @@ function wysiwyg_mathjax_init() {
 //  if (arg(0)=='node' and arg(2)!='edit') {
   if (arg(0)=='node') {
     drupal_add_css(drupal_get_path('module', 'wysiwyg_mathjax') . '/plugins/mathjax/mathjax.css');
-//    drupal_add_js('document.write("<script type=\"text\/javascript\" src=\"http:\/\/cdn.mathjax.org\/mathjax\/latest\/MathJax.js?config=MML_HTMLorMML\"><\/script>\"")', 'inline');
-//    drupal_add_js('document.write("<script type=\"text\/javascript\" src=\"http:\/\/cdn.mathjax.org\/mathjax\/latest\/MathJax.js\"><\/script>\"")', 'inline');
-
-
-/*
-    drupal_add_js(
-      'document.write("<script type=\"text\/x-mathjax-config\">
-        MathJax.Hub.Config({
-          jax: [\"input\/MathML\",\"output\/HTML-CSS\"],
-          extensions: [\"mml2jax.js\",\"MathMenu.js\",\"MathZoom.js\"]
-        });
-        <\/script>")',
-      'inline'
-    );
-    drupal_add_js(
-      'document.write("<script type=\"text\/javascript\" src=\"http:\/\/unfpa.fbp.lan\/' .
-      libraries_get_path('MathJax').'\/MathJax.js' .
-      '\"><\/script>")',
-      'inline'
-    );
-*/
-//    drupal_add_js('http://unfpa.fbp.lan/'.libraries_get_path('MathJax').'/MathJax.js');
-
-/*
-    $JaxConfig =<<< EOS
-<script type=\"text\/x-mathjax-config\">
-  MathJax.Hub.Config({
-    jax: [\"input\/MathML\",\"output\/HTML-CSS\"],
-    extensions: [\"mml2jax.js\",\"MathMenu.js\",\"MathZoom.js\"]
-  });
-</script>
-EOS;
-    drupal_add_js(
-      "document.write('$JaxConfig')",
-      'inline'
-    );
-*/
-
-/*
-    drupal_add_js(libraries_get_path('MathJax').'/MathJax.js');
-    drupal_add_js(libraries_get_path('MathJax').'/extensions/mml2jax.js');
-    drupal_add_js(libraries_get_path('MathJax').'/extensions/MathMenu.js');
-    drupal_add_js(libraries_get_path('MathJax').'/extensions/MathZoom.js');
-    drupal_add_js(libraries_get_path('MathJax').'/jax/output/HTML-CSS/fonts/STIX/fontdata.js');
-    drupal_add_js(libraries_get_path('MathJax').'/jax/output/HTML-CSS/jax.js');
-    drupal_add_js(libraries_get_path('MathJax').'/jax/output/HTML-CSS/config.js');
-    drupal_add_js(libraries_get_path('MathJax').'/jax/output/NativeMML/jax.js');
-    drupal_add_js(libraries_get_path('MathJax').'/jax/output/NativeMML/config.js');
-    drupal_add_js(libraries_get_path('MathJax').'/jax/input/MathML/jax.js');
-    drupal_add_js(libraries_get_path('MathJax').'/jax/input/MathML/config.js');
-*/
-//    drupal_add_js('sites/all/libraries/MathJax/MathJax.js');
-//    drupal_add_js(url(libraries_get_path('MathJax').'/MathJax.js', array('query'=>array('config'=>'MMLorHTML'))));
-
     drupal_add_js(drupal_get_path('module', 'wysiwyg_mathjax') . '/js/wysiwyg_mathjax_inline.js');
   }
 }
