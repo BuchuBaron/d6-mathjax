@@ -90,17 +90,19 @@ div.mathjax_styles_spacing_20_black_border .formula_title, div.mathjax_styles_bl
 }
 .wysiwyg_mathjax.formula.mathjax_centered_label_right {
   display: block;
+  position: relative;
 }
 .wysiwyg_mathjax.formula.mathjax_centered_label_right div.MathJax_MathML math {
   width: 90%;
   float: left;
 }
 .wysiwyg_mathjax.formula.mathjax_centered_label_right div {
-  height: 5px;
   clear: both;
 }
 .formula_meta.mathjax_centered_label_right {
-  float: right;
+  position: absolute;
+  right: 0;
+  top: 0;
 }
 .wysiwyg_mathjax.formula.mathjax_inline div,
 .wysiwyg_mathjax.formula.mathjax_inline div.MathJax_MathML math {
