@@ -231,6 +231,7 @@ function _wysiwyg_mathjax_details_form($formula_obj, $iid, $defaults = array()) 
     '#title' => t('Title'),
     '#default_value' => $defaults['title'],
     '#size' => 30,
+    '#maxlength' => 256,
   );
 
   // Alignment / Floating
