@@ -93,8 +93,7 @@ function wysiwyg_mathjax_menu() {
  */
 function wysiwyg_mathjax_init() {
   drupal_add_js('misc/jquery.form.js', 'core');
-//  if (arg(0)=='node' and arg(2)!='edit') {
-  if (arg(0)=='node') {
+  if (arg(0)=='node' or arg(0)=='print') {
     drupal_add_css(drupal_get_path('module', 'wysiwyg_mathjax') . '/plugins/mathjax/mathjax.css');
     drupal_add_js(drupal_get_path('module', 'wysiwyg_mathjax') . '/js/wysiwyg_mathjax_inline.js');
   }
